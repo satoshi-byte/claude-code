@@ -16,8 +16,8 @@ body {
 
 #app {
   width: 100%;
-  max-width: 900px;
-  padding: 10px;
+  max-width: 860px;
+  padding: 6px;
 }
 
 /* ヘッダー */
@@ -45,7 +45,7 @@ body {
 #game-board {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .player-area {
@@ -83,13 +83,13 @@ body {
   background: #145c1e;
   border: 2px solid #0d3d14;
   border-radius: 12px;
-  min-height: 180px;
+  min-height: 150px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
 }
 
 #wind-indicator {
@@ -245,14 +245,30 @@ body {
 }
 
 .tile.vertical-tile {
-  width: 28px;
-  height: 38px;
-  font-size: 0.85rem;
+  width: 26px;
+  height: 36px;
+  font-size: 0.8rem;
   cursor: default;
 }
 
 .tile.vertical-tile:hover {
   transform: none;
+}
+
+/* 左右プレイヤー用の極小牌 */
+.tile.tiny {
+  width: 13px;
+  height: 19px;
+  font-size: 0;
+  border-radius: 2px;
+  cursor: default;
+  box-shadow: 1px 1px 0 #706880;
+  animation: none;
+}
+
+.tile.tiny:hover {
+  transform: none;
+  box-shadow: 1px 1px 0 #706880;
 }
 
 .tile.riichi-tile {
@@ -286,6 +302,22 @@ body {
   align-items: center;
 }
 
+/* 左右プレイヤー手牌 - 折り返し水平表示 */
+.side-player {
+  width: 88px;
+  min-width: 88px;
+  max-width: 88px;
+}
+
+.hand.side-hand {
+  flex-direction: row;
+  flex-wrap: wrap;
+  max-width: 86px;
+  gap: 1px;
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
 /* 捨て牌エリア */
 .discard-area {
   display: flex;
@@ -302,6 +334,20 @@ body {
   max-width: 80px;
   min-height: 80px;
   max-height: 200px;
+}
+
+/* 左右プレイヤー捨て牌 */
+.side-discard {
+  flex-wrap: wrap;
+  max-width: 86px;
+  align-content: flex-start;
+}
+
+#discard-1 .tile.small,
+#discard-3 .tile.small {
+  width: 18px;
+  height: 26px;
+  font-size: 0.55rem;
 }
 
 /* 副露 (鳴き) */

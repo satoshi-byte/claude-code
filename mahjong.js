@@ -1074,9 +1074,9 @@ class MahjongGame {
   renderOpponents() {
     // 右家: player 1, 対面: player 2, 左家: player 3
     const positions = [
-      { domIdx: 1, handDom: 'hand-1', discardDom: 'discard-1' }, // 右家
-      { domIdx: 2, handDom: 'hand-2', discardDom: 'discard-2' }, // 対面
-      { domIdx: 3, handDom: 'hand-3', discardDom: 'discard-3' }, // 左家
+      { domIdx: 1, handDom: 'hand-1', discardDom: 'discard-1', isSide: true },
+      { domIdx: 2, handDom: 'hand-2', discardDom: 'discard-2', isSide: false },
+      { domIdx: 3, handDom: 'hand-3', discardDom: 'discard-3', isSide: true },
     ];
 
     for (const pos of positions) {
@@ -1087,8 +1087,8 @@ class MahjongGame {
       // 伏せ牌
       for (let i = 0; i < player.hand.length; i++) {
         const el = document.createElement('span');
-        el.className = 'tile back vertical-tile';
-        el.textContent = '🀫';
+        el.className = pos.isSide ? 'tile back tiny' : 'tile back vertical-tile';
+        el.textContent = pos.isSide ? '' : '🀫';
         handDiv.appendChild(el);
       }
 
