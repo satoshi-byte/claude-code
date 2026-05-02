@@ -1137,4 +1137,13 @@ function getDoraFromIndicator(indicator) {
 }
 
 // ゲーム開始
-const game = new MahjongGame();
+let game;
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    game = new MahjongGame();
+  } catch (e) {
+    const msgEl = document.getElementById('message-area');
+    if (msgEl) msgEl.textContent = `起動エラー: ${e.message}`;
+    console.error(e);
+  }
+});
