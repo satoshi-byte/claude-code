@@ -186,16 +186,16 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f5f0e0;
+  background: #faf7f0;
   border: 1px solid #c8b89a;
   border-radius: 4px;
-  color: #222;
-  font-size: 1.1rem;
-  width: 36px;
-  height: 48px;
+  font-size: 1.75rem;
+  line-height: 1;
+  width: 40px;
+  height: 52px;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
-  box-shadow: 2px 2px 0 #a09070;
+  box-shadow: 0 2px 0 #a09070, 0 3px 4px rgba(0,0,0,0.25);
   user-select: none;
   flex-shrink: 0;
 }
@@ -212,8 +212,9 @@ body {
 }
 
 .tile.drawn {
-  background: #e8f8e8;
-  border-color: #6aaa6a;
+  background: #dff5e0;
+  border-color: #5aaa6a;
+  box-shadow: 0 2px 0 #4a8a5a, 0 3px 6px rgba(0,0,0,0.3);
 }
 
 .tile.red-five {
@@ -232,22 +233,22 @@ body {
 }
 
 .tile.small {
-  width: 24px;
-  height: 32px;
-  font-size: 0.7rem;
+  width: 28px;
+  height: 38px;
+  font-size: 1.1rem;
   border-radius: 3px;
-  box-shadow: 1px 1px 0 #a09070;
+  box-shadow: 0 1px 0 #a09070, 0 2px 3px rgba(0,0,0,0.2);
 }
 
 .tile.small:hover {
   transform: none;
-  box-shadow: 1px 1px 0 #a09070;
+  box-shadow: 0 1px 0 #a09070, 0 2px 3px rgba(0,0,0,0.2);
 }
 
 .tile.vertical-tile {
-  width: 26px;
-  height: 36px;
-  font-size: 0.8rem;
+  width: 30px;
+  height: 40px;
+  font-size: 1.2rem;
   cursor: default;
 }
 
@@ -473,11 +474,11 @@ body {
   animation: fadeIn 0.2s ease;
 }
 
-/* 牌の色 */
-.man { color: #c0392b; }
-.pin { color: #1a5276; }
-.sou { color: #1e8449; }
-.honor { color: #7d6608; }
+/* スーツ別背景 (絵文字が見やすくなるように淡い色分け) */
+.tile.man   { background: #fff5f5; border-color: #f0c0c0; }
+.tile.pin   { background: #f5f8ff; border-color: #b8ccf0; }
+.tile.sou   { background: #f5fff7; border-color: #b0ddb8; }
+.tile.honor { background: #fffbf0; border-color: #e8cc88; }
 
 /* リーチ棒 */
 .riichi-stick {
@@ -493,15 +494,15 @@ body {
 /* レスポンシブ */
 @media (max-width: 600px) {
   .tile {
-    width: 28px;
-    height: 38px;
-    font-size: 0.85rem;
+    width: 32px;
+    height: 42px;
+    font-size: 1.4rem;
   }
 
   .tile.small {
-    width: 20px;
-    height: 26px;
-    font-size: 0.6rem;
+    width: 22px;
+    height: 30px;
+    font-size: 0.9rem;
   }
 
   #center-table {

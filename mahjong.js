@@ -24,12 +24,26 @@ const TILES = (() => {
 })();
 
 const HONOR_NAMES = ['東', '南', '西', '北', '白', '発', '中'];
-const SUIT_SYMBOLS = { man: '萬', pin: '筒', sou: '索' };
+
+// Unicode麻雀牌絵文字
+const TILE_EMOJI = {
+  man:   ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏'],
+  sou:   ['🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘'],
+  pin:   ['🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡'],
+  honor: ['🀀','🀁','🀂','🀃','🀆','🀅','🀄'], // 東南西北白発中
+};
 
 function tileDisplay(tile) {
   if (!tile) return '';
+  return TILE_EMOJI[tile.suit][tile.num - 1];
+}
+
+// 結果表示用テキスト (役名・ログ用)
+function tileText(tile) {
+  if (!tile) return '';
   if (tile.suit === 'honor') return tile.honor;
-  return tile.num + SUIT_SYMBOLS[tile.suit];
+  const suits = { man: '萬', pin: '筒', sou: '索' };
+  return tile.num + suits[tile.suit];
 }
 
 function tileClass(tile) {
@@ -568,7 +582,7 @@ class MahjongGame {
 
     if (this.currentPlayer === 0) {
       // 自分のターン
-      this.updateMessage(`ツモ: ${tileDisplay(tile)} — 捨てる牌を選んでクリックしてください`);
+      this.updateMessage(`ツモ: ${tileText(tile)} — 捨てる牌を選んでクリックしてください`);
       this.showTsumoButtons(tile, player);
     } else {
       // AI のターン
@@ -624,7 +638,7 @@ class MahjongGame {
     this.lastDiscard = discardTile;
     this.lastDiscardPlayer = this.currentPlayer;
 
-    this.updateMessage(`${player.name} が ${tileDisplay(discardTile)} を捨てました`);
+    this.updateMessage(`${player.name} が ${tileText(discardTile)} を捨てました`);
     this.render();
     setTimeout(() => this.afterDiscard(), 700);
   }
@@ -702,7 +716,7 @@ class MahjongGame {
     document.getElementById('btn-chi').disabled = !canChi;
     document.getElementById('btn-kan').disabled = true;
 
-    this.updateMessage(canRon ? `ロンできます！ (${tileDisplay(discard)})` : `鳴けます！ (${tileDisplay(discard)})`);
+    this.updateMessage(canRon ? `ロンできます！ (${tileText(discard)})` : `鳴けます！ (${tileText(discard)})`);
   }
 
   playerAction(action) {
@@ -821,7 +835,7 @@ class MahjongGame {
     this.selectedTile = null;
 
     this.render();
-    this.updateMessage(`${tileDisplay(tile)} を捨てました`);
+    this.updateMessage(`${tileText(tile)} を捨てました`);
     setTimeout(() => this.afterDiscard(), 400);
   }
 
