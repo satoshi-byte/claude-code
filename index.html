@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>麻雀ゲーム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="game-header">
+      <h1>🀄 麻雀</h1>
+      <div id="game-info">
+        <span id="round-info">東1局</span>
+        <span id="honba-info">0本場</span>
+        <span id="wall-count">残り: 70</span>
+      </div>
+    </div>
+
+    <div id="game-board">
+      <!-- 上家 (対面) -->
+      <div id="player-top" class="player-area opponent">
+        <div class="player-label">上家 (対面)</div>
+        <div class="player-score-badge"><span class="player-score" id="score-2">25000</span></div>
+        <div class="hand-container">
+          <div class="hand hidden-hand" id="hand-2"></div>
+        </div>
+        <div class="discard-area" id="discard-2"></div>
+      </div>
+
+      <div id="center-row">
+        <!-- 左家 -->
+        <div id="player-left" class="player-area opponent">
+          <div class="player-label">左家</div>
+          <div class="player-score-badge"><span class="player-score" id="score-3">25000</span></div>
+          <div class="hand-container">
+            <div class="hand hidden-hand vertical" id="hand-3"></div>
+          </div>
+          <div class="discard-area vertical-discard" id="discard-3"></div>
+        </div>
+
+        <!-- 中央卓 -->
+        <div id="center-table">
+          <div id="wind-indicator">
+            <div class="wind-kanji">東</div>
+            <div id="dora-area">
+              <div class="dora-label">ドラ</div>
+              <div id="dora-tiles"></div>
+            </div>
+          </div>
+          <div id="action-area">
+            <div id="message-area">配牌中...</div>
+            <div id="action-buttons" class="hidden">
+              <button id="btn-chi" class="action-btn" onclick="game.playerAction('chi')">チー</button>
+              <button id="btn-pon" class="action-btn" onclick="game.playerAction('pon')">ポン</button>
+              <button id="btn-kan" class="action-btn" onclick="game.playerAction('kan')">カン</button>
+              <button id="btn-ron" class="action-btn ron-btn" onclick="game.playerAction('ron')">ロン</button>
+              <button id="btn-skip" class="action-btn skip-btn" onclick="game.playerAction('skip')">スキップ</button>
+            </div>
+            <div id="tsumo-buttons" class="hidden">
+              <button id="btn-tsumo" class="action-btn ron-btn" onclick="game.playerAction('tsumo')">ツモ</button>
+              <button id="btn-riichi" class="action-btn riichi-btn" onclick="game.playerAction('riichi')">リーチ</button>
+              <button id="btn-tsumo-skip" class="action-btn skip-btn" onclick="game.playerAction('tsumo-skip')">スキップ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右家 -->
+        <div id="player-right" class="player-area opponent">
+          <div class="player-label">右家</div>
+          <div class="player-score-badge"><span class="player-score" id="score-1">25000</span></div>
+          <div class="hand-container">
+            <div class="hand hidden-hand vertical" id="hand-1"></div>
+          </div>
+          <div class="discard-area vertical-discard" id="discard-1"></div>
+        </div>
+      </div>
+
+      <!-- 自分 -->
+      <div id="player-bottom" class="player-area self">
+        <div class="discard-area" id="discard-0"></div>
+        <div class="hand-container">
+          <div class="hand" id="hand-0"></div>
+        </div>
+        <div class="player-bottom-info">
+          <div class="player-label">自分 <span id="riichi-indicator" class="hidden">リーチ中</span></div>
+          <div class="player-score-badge"><span class="player-score" id="score-0">25000</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果モーダル -->
+    <div id="result-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 id="result-title">結果</h2>
+        <div id="result-detail"></div>
+        <div id="score-changes"></div>
+        <button class="action-btn" onclick="game.nextRound()">次の局へ</button>
+      </div>
+    </div>
+
+    <!-- ゲーム終了モーダル -->
+    <div id="gameover-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>ゲーム終了</h2>
+        <div id="final-scores"></div>
+        <button class="action-btn" onclick="game.restart()">もう一度</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="mahjong.js"></script>
+</body>
+</html>
