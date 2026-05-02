@@ -24,30 +24,32 @@ const TILES = (() => {
 })();
 
 const HONOR_NAMES = ['東', '南', '西', '北', '白', '発', '中'];
+const SUIT_LABELS = { man: '萬', pin: '筒', sou: '索' };
 
-// Unicode麻雀牌絵文字
-const TILE_EMOJI = {
-  man:   ['🀇','🀈','🀉','🀊','🀋','🀌','🀍','🀎','🀏'],
-  sou:   ['🀐','🀑','🀒','🀓','🀔','🀕','🀖','🀗','🀘'],
-  pin:   ['🀙','🀚','🀛','🀜','🀝','🀞','🀟','🀠','🀡'],
-  honor: ['🀀','🀁','🀂','🀃','🀆','🀅','🀄'], // 東南西北白発中
-};
-
+// 牌のHTML（数字＋スーツ2段表示）
 function tileDisplay(tile) {
   if (!tile) return '';
-  return TILE_EMOJI[tile.suit][tile.num - 1];
+  if (tile.suit === 'honor') {
+    return `<span class="t-n">${tile.honor}</span>`;
+  }
+  return `<span class="t-n">${tile.num}</span><span class="t-s">${SUIT_LABELS[tile.suit]}</span>`;
 }
 
-// 結果表示用テキスト (役名・ログ用)
+// メッセージ用テキスト
 function tileText(tile) {
   if (!tile) return '';
   if (tile.suit === 'honor') return tile.honor;
-  const suits = { man: '萬', pin: '筒', sou: '索' };
-  return tile.num + suits[tile.suit];
+  return tile.num + SUIT_LABELS[tile.suit];
 }
 
 function tileClass(tile) {
   if (!tile) return '';
+  if (tile.suit === 'honor') {
+    if (tile.honor === '中') return 'honor chun';
+    if (tile.honor === '発') return 'honor hatsu';
+    if (tile.honor === '白') return 'honor haku';
+    return 'honor wind';
+  }
   return tile.suit;
 }
 
@@ -1042,7 +1044,7 @@ class MahjongGame {
       el.className = `tile ${tileClass(tile)}`;
       if (i === sorted.length - 1 && this.phase === 'discard') el.classList.add('drawn');
       if (this.selectedTile === realIdx) el.classList.add('selected');
-      el.textContent = tileDisplay(tile);
+      el.innerHTML = tileDisplay(tile);
       el.onclick = () => {
         if (this.phase === 'discard' && this.currentPlayer === 0) {
           const handRealIdx = player.hand.findIndex((t, idx) => t === tile);
@@ -1066,7 +1068,7 @@ class MahjongGame {
         for (const t of meld.tiles) {
           const tel = document.createElement('span');
           tel.className = `tile small ${tileClass(t)}`;
-          tel.textContent = tileDisplay(t);
+          tel.innerHTML = tileDisplay(t);
           meldEl.appendChild(tel);
         }
         meldGroup.appendChild(meldEl);
@@ -1080,7 +1082,7 @@ class MahjongGame {
     for (const t of player.discards) {
       const el = document.createElement('span');
       el.className = `tile small ${tileClass(t)}`;
-      el.textContent = tileDisplay(t);
+      el.innerHTML = tileDisplay(t);
       discardDiv.appendChild(el);
     }
   }
@@ -1115,7 +1117,7 @@ class MahjongGame {
         if (player.isRiichi && t === player.discards[player.discards.length - (player.hand.length > 0 ? 1 : 1)]) {
           el.classList.add('riichi-tile');
         }
-        el.textContent = tileDisplay(t);
+        el.innerHTML = tileDisplay(t);
         discardDiv.appendChild(el);
       }
     }
@@ -1128,7 +1130,7 @@ class MahjongGame {
       const dora = getDoraFromIndicator(ind);
       const el = document.createElement('span');
       el.className = `tile small ${tileClass(dora)}`;
-      el.textContent = tileDisplay(dora);
+      el.innerHTML = tileDisplay(dora);
       doraDiv.appendChild(el);
     }
   }

@@ -184,20 +184,37 @@ body {
 /* 牌 */
 .tile {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #faf7f0;
   border: 1px solid #c8b89a;
   border-radius: 4px;
-  font-size: 1.75rem;
-  line-height: 1;
   width: 40px;
   height: 52px;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
-  box-shadow: 0 2px 0 #a09070, 0 3px 4px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 0 #a09070, 0 3px 4px rgba(0,0,0,0.2);
   user-select: none;
   flex-shrink: 0;
+  gap: 0;
+}
+
+/* 牌の数字 */
+.t-n {
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 牌のスーツ (萬/筒/索) */
+.t-s {
+  font-size: 0.48rem;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: 1px;
+  letter-spacing: 0;
 }
 
 .tile:hover {
@@ -235,7 +252,6 @@ body {
 .tile.small {
   width: 28px;
   height: 38px;
-  font-size: 1.1rem;
   border-radius: 3px;
   box-shadow: 0 1px 0 #a09070, 0 2px 3px rgba(0,0,0,0.2);
 }
@@ -244,6 +260,13 @@ body {
   transform: none;
   box-shadow: 0 1px 0 #a09070, 0 2px 3px rgba(0,0,0,0.2);
 }
+
+.tile.small .t-n { font-size: 0.9rem; }
+.tile.small .t-s { font-size: 0.36rem; }
+.tile.small.wind  .t-n,
+.tile.small.haku  .t-n,
+.tile.small.hatsu .t-n,
+.tile.small.chun  .t-n { font-size: 0.75rem; }
 
 .tile.vertical-tile {
   width: 30px;
@@ -474,11 +497,25 @@ body {
   animation: fadeIn 0.2s ease;
 }
 
-/* スーツ別背景 (絵文字が見やすくなるように淡い色分け) */
-.tile.man   { background: #fff5f5; border-color: #f0c0c0; }
-.tile.pin   { background: #f5f8ff; border-color: #b8ccf0; }
-.tile.sou   { background: #f5fff7; border-color: #b0ddb8; }
-.tile.honor { background: #fffbf0; border-color: #e8cc88; }
+/* スーツ別色 */
+.tile.man { background: #fff5f5; border-color: #f0b0b0; }
+.tile.pin { background: #f4f8ff; border-color: #a8c4f0; }
+.tile.sou { background: #f4fff6; border-color: #a0d4a8; }
+
+.tile.man .t-n, .tile.man .t-s { color: #c0392b; }
+.tile.pin .t-n, .tile.pin .t-s { color: #0d47a1; }
+.tile.sou .t-n, .tile.sou .t-s { color: #1b5e20; }
+
+/* 字牌サブタイプ (東南西北 / 白 / 発 / 中) */
+.tile.wind   { background: #f4f6ff; border-color: #9fb4e8; }
+.tile.haku   { background: #f8f8f8; border-color: #bdbdbd; }
+.tile.hatsu  { background: #f4fff6; border-color: #a0d4a8; }
+.tile.chun   { background: #fff5f5; border-color: #f0b0b0; }
+
+.tile.wind  .t-n { color: #1a237e; font-size: 1.1rem; }
+.tile.haku  .t-n { color: #424242; font-size: 1.1rem; }
+.tile.hatsu .t-n { color: #1b5e20; font-size: 1.1rem; }
+.tile.chun  .t-n { color: #b71c1c; font-size: 1.1rem; }
 
 /* リーチ棒 */
 .riichi-stick {
