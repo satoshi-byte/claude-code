@@ -1091,9 +1091,10 @@ class MahjongGame {
     handDiv.innerHTML = '';
 
     // ツモ牌を分離、残りをソート
-    const drawnTile = player.drawnTile || null;
+    const drawnIdx = player.drawnTile ? player.hand.indexOf(player.drawnTile) : -1;
+    const drawnTile = drawnIdx >= 0 ? player.drawnTile : null;
     const sortedMain = player.hand
-      .filter(t => t !== drawnTile)
+      .filter((_, i) => i !== drawnIdx)
       .sort(compareTile);
 
     const makeTileEl = (tile, isDrawn) => {
