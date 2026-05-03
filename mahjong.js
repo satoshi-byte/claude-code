@@ -42,6 +42,11 @@ function tileText(tile) {
   return tile.num + SUIT_LABELS[tile.suit];
 }
 
+function tileHtml(tile) {
+  if (!tile) return '';
+  return `<span class="tile small ${tileClass(tile)}" style="display:inline-flex;vertical-align:middle;cursor:default;pointer-events:none">${tileDisplay(tile)}</span>`;
+}
+
 function tileClass(tile) {
   if (!tile) return '';
   if (tile.suit === 'honor') {
@@ -586,7 +591,7 @@ class MahjongGame {
 
     if (this.currentPlayer === 0) {
       // 自分のターン
-      this.updateMessage(`ツモ: ${tileText(tile)} — 捨てる牌を選んでクリックしてください`);
+      this.updateMessage(`ツモ ${tileHtml(tile)} — 捨てる牌を選んでください`);
       this.showTsumoButtons(tile, player);
     } else {
       // AI のターン
@@ -645,7 +650,7 @@ class MahjongGame {
     this.lastDiscard = discardTile;
     this.lastDiscardPlayer = this.currentPlayer;
 
-    this.updateMessage(`${player.name} が ${tileText(discardTile)} を捨てました`);
+    this.updateMessage(`${player.name} が ${tileHtml(discardTile)} を捨てました`);
     this.render();
     setTimeout(() => this.afterDiscard(), 700);
   }
@@ -723,7 +728,7 @@ class MahjongGame {
     document.getElementById('btn-chi').disabled = !canChi;
     document.getElementById('btn-kan').disabled = true;
 
-    this.updateMessage(canRon ? `ロンできます！ (${tileText(discard)})` : `鳴けます！ (${tileText(discard)})`);
+    this.updateMessage(canRon ? `ロンできます！ ${tileHtml(discard)}` : `鳴けます！ ${tileHtml(discard)}`);
   }
 
   playerAction(action) {
@@ -835,7 +840,7 @@ class MahjongGame {
     player.hand.push(rinshan);
     player.drawnTile = rinshan;
 
-    this.updateMessage(`暗槓！ ツモ: ${tileText(rinshan)}`);
+    this.updateMessage(`暗槓！ ツモ ${tileHtml(rinshan)} — 捨てる牌を選んでください`);
     this.render();
     this.showTsumoButtons(rinshan, player);
   }
@@ -883,7 +888,7 @@ class MahjongGame {
     this.selectedTile = null;
 
     this.render();
-    this.updateMessage(`${tileText(tile)} を捨てました`);
+    this.updateMessage(`${tileHtml(tile)} を捨てました`);
     setTimeout(() => this.afterDiscard(), 400);
   }
 
@@ -1051,7 +1056,7 @@ class MahjongGame {
   }
 
   updateMessage(msg) {
-    document.getElementById('message-area').textContent = msg;
+    document.getElementById('message-area').innerHTML = msg;
   }
 
   // =====================
