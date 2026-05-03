@@ -597,7 +597,8 @@ class MahjongGame {
 
   showTsumoButtons(drawnTile, player) {
     const canWin = isWinningHand([...player.hand]);
-    const canRiichi = !player.isRiichi && isTenpai(player.hand.slice(0, -1)) && this.wall.length > 4;
+    const canRiichi = !player.isRiichi && this.wall.length > 4 &&
+      player.hand.some((_, i) => isTenpai(player.hand.filter((_, j) => j !== i)));
     // 暗槓: 手牌に4枚同じ牌がある
     const canKan = !player.isRiichi && player.hand.some(tile =>
       player.hand.filter(t => tilesEqual(t, tile)).length === 4
@@ -622,7 +623,8 @@ class MahjongGame {
     }
 
     // リーチチェック
-    if (!player.isRiichi && isTenpai(player.hand.slice(0, -1)) && this.wall.length > 4) {
+    if (!player.isRiichi && this.wall.length > 4 &&
+        player.hand.some((_, i) => isTenpai(player.hand.filter((_, j) => j !== i)))) {
       const discardTile = player.hand[player.hand.length - 1]; // ツモ牌を捨てる
       player.hand.pop();
       player.isRiichi = true;
