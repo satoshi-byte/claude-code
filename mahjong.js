@@ -1092,12 +1092,12 @@ class MahjongGame {
     const handDiv = document.getElementById('hand-0');
     handDiv.innerHTML = '';
 
-    // ツモ牌を分離、残りをソート
-    const drawnIdx = player.drawnTile ? player.hand.indexOf(player.drawnTile) : -1;
-    const drawnTile = drawnIdx >= 0 ? player.drawnTile : null;
-    const sortedMain = player.hand
-      .filter((_, i) => i !== drawnIdx)
-      .sort(compareTile);
+    // ツモ牌は常に hand の末尾にある（push で追加するため）
+    const hasDrawn = !!player.drawnTile && player.hand.length > 0;
+    const drawnTile = hasDrawn ? player.hand[player.hand.length - 1] : null;
+    const sortedMain = hasDrawn
+      ? [...player.hand.slice(0, -1)].sort(compareTile)
+      : [...player.hand].sort(compareTile);
 
     const makeTileEl = (tile, isDrawn) => {
       const el = document.createElement('span');
