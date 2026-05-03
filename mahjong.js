@@ -511,10 +511,10 @@ function aiShouldChi(tile, hand, melds) {
 class MahjongGame {
   constructor() {
     this.players = [
-      { name: '自分', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false },
-      { name: '右家', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false },
-      { name: '対面', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false },
-      { name: '左家', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false },
+      { name: '自分', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false, drawnTile: null },
+      { name: '右家', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false, drawnTile: null },
+      { name: '対面', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false, drawnTile: null },
+      { name: '左家', score: 25000, hand: [], melds: [], discards: [], isRiichi: false, isDealer: false, drawnTile: null },
     ];
     this.dealerIdx = 0;
     this.roundWind = 1; // 1=東, 2=南, 3=西, 4=北
@@ -528,7 +528,6 @@ class MahjongGame {
     this.lastDiscardPlayer = -1;
     this.selectedTile = null;
     this.riichiSticks = 0;
-    this.playerJustDrew = false;
 
     this.start();
   }
@@ -549,6 +548,7 @@ class MahjongGame {
       p.melds = [];
       p.discards = [];
       p.isRiichi = false;
+      p.drawnTile = null;
     }
     for (let i = 0; i < 13; i++) {
       for (let pi = 0; pi < 4; pi++) {
@@ -579,9 +579,8 @@ class MahjongGame {
     const tile = this.wall.pop();
     const player = this.players[this.currentPlayer];
     player.hand.push(tile);
+    player.drawnTile = tile;
     this.phase = 'discard';
-
-    if (this.currentPlayer === 0) this.playerJustDrew = true;
 
     this.render();
 
@@ -746,7 +745,7 @@ class MahjongGame {
       this.lastDiscard = drawnTile;
       this.lastDiscardPlayer = 0;
       this.riichiSticks++;
-      this.playerJustDrew = false;
+      player.drawnTile = null;
       this.updateMessage('リーチ！');
       this.render();
       setTimeout(() => this.afterDiscard(), 600);
@@ -798,7 +797,7 @@ class MahjongGame {
 
     this.currentPlayer = 0;
     this.phase = 'discard';
-    this.playerJustDrew = false;
+    this.players[0].drawnTile = null;
     this.updateMessage('捨てる牌を選んでクリックしてください');
     this.render();
   }
@@ -832,7 +831,7 @@ class MahjongGame {
     }
     const rinshan = this.wall.pop();
     player.hand.push(rinshan);
-    this.playerJustDrew = true;
+    player.drawnTile = rinshan;
 
     this.updateMessage(`暗槓！ ツモ: ${tileText(rinshan)}`);
     this.render();
@@ -876,10 +875,10 @@ class MahjongGame {
 
     player.hand.splice(tileIdx, 1);
     player.discards.push(tile);
+    player.drawnTile = null;
     this.lastDiscard = tile;
     this.lastDiscardPlayer = 0;
     this.selectedTile = null;
-    this.playerJustDrew = false;
 
     this.render();
     this.updateMessage(`${tileText(tile)} を捨てました`);
@@ -889,7 +888,7 @@ class MahjongGame {
   handleWin(winnerIdx, loserIdx, isTsumo) {
     const winner = this.players[winnerIdx];
     const isDealer = winnerIdx === this.dealerIdx;
-    const drawnTile = winner.hand[winner.hand.length - 1];
+    const drawnTile = winner.drawnTile || winner.hand[winner.hand.length - 1];
 
     // ドラ確定
     const doraList = this.doraIndicators.map(d => getDoraFromIndicator(d));
@@ -1091,14 +1090,11 @@ class MahjongGame {
     const handDiv = document.getElementById('hand-0');
     handDiv.innerHTML = '';
 
-    // ツモ牌を末尾から分離、残りをソート
-    const drawnTile = (this.playerJustDrew && player.hand.length > 0)
-      ? player.hand[player.hand.length - 1]
-      : null;
-    const sortedMain = (drawnTile
-      ? player.hand.slice(0, -1)
-      : [...player.hand]
-    ).sort(compareTile);
+    // ツモ牌を分離、残りをソート
+    const drawnTile = player.drawnTile || null;
+    const sortedMain = player.hand
+      .filter(t => t !== drawnTile)
+      .sort(compareTile);
 
     const makeTileEl = (tile, isDrawn) => {
       const el = document.createElement('span');
