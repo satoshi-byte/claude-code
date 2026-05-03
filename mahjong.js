@@ -528,6 +528,7 @@ class MahjongGame {
     this.lastDiscardPlayer = -1;
     this.selectedTile = null;
     this.riichiSticks = 0;
+    this.playerJustDrew = false;
 
     this.start();
   }
@@ -580,6 +581,8 @@ class MahjongGame {
     player.hand.push(tile);
     this.phase = 'discard';
 
+    if (this.currentPlayer === 0) this.playerJustDrew = true;
+
     this.render();
 
     if (this.currentPlayer === 0) {
@@ -596,15 +599,16 @@ class MahjongGame {
   showTsumoButtons(drawnTile, player) {
     const canWin = isWinningHand([...player.hand]);
     const canRiichi = !player.isRiichi && isTenpai(player.hand.slice(0, -1)) && this.wall.length > 4;
+    // 暗槓: 手牌に4枚同じ牌がある
+    const canKan = !player.isRiichi && player.hand.some(tile =>
+      player.hand.filter(t => tilesEqual(t, tile)).length === 4
+    );
 
-    const tsumoDiv = document.getElementById('tsumo-buttons');
-    const tsumoBtn = document.getElementById('btn-tsumo');
-    const riichiBtn = document.getElementById('btn-riichi');
+    document.getElementById('btn-tsumo').disabled = !canWin;
+    document.getElementById('btn-riichi').disabled = !canRiichi;
+    document.getElementById('btn-ankan').disabled = !canKan;
 
-    tsumoBtn.disabled = !canWin;
-    riichiBtn.disabled = !canRiichi;
-
-    tsumoDiv.classList.remove('hidden');
+    document.getElementById('tsumo-buttons').classList.remove('hidden');
     document.getElementById('action-buttons').classList.add('hidden');
   }
 
@@ -731,6 +735,8 @@ class MahjongGame {
       this.handleWin(0, this.lastDiscardPlayer, false);
     } else if (action === 'tsumo') {
       this.handleWin(0, null, true);
+    } else if (action === 'ankan') {
+      this.performAnkan();
     } else if (action === 'riichi') {
       // リーチ: ツモ牌を捨てる
       const drawnTile = player.hand[player.hand.length - 1];
@@ -740,6 +746,7 @@ class MahjongGame {
       this.lastDiscard = drawnTile;
       this.lastDiscardPlayer = 0;
       this.riichiSticks++;
+      this.playerJustDrew = false;
       this.updateMessage('リーチ！');
       this.render();
       setTimeout(() => this.afterDiscard(), 600);
@@ -791,8 +798,45 @@ class MahjongGame {
 
     this.currentPlayer = 0;
     this.phase = 'discard';
+    this.playerJustDrew = false;
     this.updateMessage('捨てる牌を選んでクリックしてください');
     this.render();
+  }
+
+  performAnkan() {
+    const player = this.players[0];
+    // 4枚ある牌を探す
+    const kanTile = player.hand.find(tile =>
+      player.hand.filter(t => tilesEqual(t, tile)).length === 4
+    );
+    if (!kanTile) return;
+
+    // 4枚を手牌から除いて副露へ
+    const kanTiles = [];
+    for (let i = player.hand.length - 1; i >= 0; i--) {
+      if (tilesEqual(player.hand[i], kanTile)) {
+        kanTiles.unshift(player.hand.splice(i, 1)[0]);
+      }
+    }
+    player.melds.push({ type: 'ankan', tiles: kanTiles, from: -1 });
+
+    // 新ドラ表示牌を追加
+    if (this.wall.length > 4) {
+      this.doraIndicators.push(this.wall[0]);
+    }
+
+    // 嶺上牌をツモ
+    if (this.wall.length <= 4) {
+      this.endRound('ryukyoku');
+      return;
+    }
+    const rinshan = this.wall.pop();
+    player.hand.push(rinshan);
+    this.playerJustDrew = true;
+
+    this.updateMessage(`暗槓！ ツモ: ${tileText(rinshan)}`);
+    this.render();
+    this.showTsumoButtons(rinshan, player);
   }
 
   aiMeld(playerIdx, type, discard) {
@@ -835,6 +879,7 @@ class MahjongGame {
     this.lastDiscard = tile;
     this.lastDiscardPlayer = 0;
     this.selectedTile = null;
+    this.playerJustDrew = false;
 
     this.render();
     this.updateMessage(`${tileText(tile)} を捨てました`);
@@ -859,7 +904,17 @@ class MahjongGame {
 
     if (!result) {
       // 役なし (フリテンなど)
-      this.updateMessage('役なし！');
+      if (isTsumo) {
+        this.updateMessage('役なし — 捨てる牌を選んでクリックしてください');
+        this.phase = 'discard';
+        this.render();
+        this.showTsumoButtons(drawnTile, winner);
+      } else {
+        this.updateMessage('役なし — ロン不可');
+        this.currentPlayer = (loserIdx + 1) % 4;
+        this.phase = 'draw';
+        setTimeout(() => this.drawTile(), 800);
+      }
       return;
     }
 
@@ -1036,10 +1091,8 @@ class MahjongGame {
     const handDiv = document.getElementById('hand-0');
     handDiv.innerHTML = '';
 
-    const isMyDiscard = this.phase === 'discard' && this.currentPlayer === 0;
-
     // ツモ牌を末尾から分離、残りをソート
-    const drawnTile = (isMyDiscard && player.hand.length > 0)
+    const drawnTile = (this.playerJustDrew && player.hand.length > 0)
       ? player.hand[player.hand.length - 1]
       : null;
     const sortedMain = (drawnTile
