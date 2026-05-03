@@ -487,6 +487,12 @@ body {
   flex-shrink: 0;
 }
 
+/* ツモ牌スペーサー（牌1個分） */
+.draw-separator {
+  width: 40px;
+  flex-shrink: 0;
+}
+
 /* アニメーション */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }

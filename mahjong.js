@@ -1036,23 +1036,42 @@ class MahjongGame {
     const handDiv = document.getElementById('hand-0');
     handDiv.innerHTML = '';
 
-    const sorted = [...player.hand].sort(compareTile);
+    const isMyDiscard = this.phase === 'discard' && this.currentPlayer === 0;
 
-    sorted.forEach((tile, i) => {
-      const realIdx = player.hand.indexOf(tile);
+    // ツモ牌を末尾から分離、残りをソート
+    const drawnTile = (isMyDiscard && player.hand.length > 0)
+      ? player.hand[player.hand.length - 1]
+      : null;
+    const sortedMain = (drawnTile
+      ? player.hand.slice(0, -1)
+      : [...player.hand]
+    ).sort(compareTile);
+
+    const makeTileEl = (tile, isDrawn) => {
       const el = document.createElement('span');
       el.className = `tile ${tileClass(tile)}`;
-      if (i === sorted.length - 1 && this.phase === 'discard') el.classList.add('drawn');
-      if (this.selectedTile === realIdx) el.classList.add('selected');
+      if (isDrawn) el.classList.add('drawn');
       el.innerHTML = tileDisplay(tile);
       el.onclick = () => {
         if (this.phase === 'discard' && this.currentPlayer === 0) {
-          const handRealIdx = player.hand.findIndex((t, idx) => t === tile);
-          this.playerDiscard(handRealIdx);
+          this.playerDiscard(player.hand.findIndex(t => t === tile));
         }
       };
-      handDiv.appendChild(el);
-    });
+      return el;
+    };
+
+    // 手牌13枚
+    for (const tile of sortedMain) {
+      handDiv.appendChild(makeTileEl(tile, false));
+    }
+
+    // ツモ牌：牌1個分スペース → ツモ牌
+    if (drawnTile) {
+      const sep = document.createElement('span');
+      sep.className = 'draw-separator';
+      handDiv.appendChild(sep);
+      handDiv.appendChild(makeTileEl(drawnTile, true));
+    }
 
     // 副露表示
     if (player.melds.length > 0) {
