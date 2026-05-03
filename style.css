@@ -228,6 +228,11 @@ body {
   background: #fffde0;
 }
 
+.tile.riichi-candidate {
+  outline: 2px solid #f0c060;
+  transform: translateY(-4px);
+}
+
 .tile.drawn {
   background: #dff5e0;
   border-color: #5aaa6a;
@@ -314,6 +319,8 @@ body {
   gap: 3px;
   flex-wrap: nowrap;
   align-items: flex-end;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .hidden-hand {

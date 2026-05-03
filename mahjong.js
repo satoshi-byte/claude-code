@@ -533,6 +533,7 @@ class MahjongGame {
     this.lastDiscardPlayer = -1;
     this.selectedTile = null;
     this.riichiSticks = 0;
+    this.riichiMode = false;
 
     this.start();
   }
@@ -562,6 +563,7 @@ class MahjongGame {
       }
     }
 
+    this.riichiMode = false;
     this.players[this.dealerIdx].isDealer = true;
     this.currentPlayer = this.dealerIdx;
     this.phase = 'draw';
@@ -744,18 +746,12 @@ class MahjongGame {
     } else if (action === 'ankan') {
       this.performAnkan();
     } else if (action === 'riichi') {
-      // リーチ: ツモ牌を捨てる
-      const drawnTile = player.hand[player.hand.length - 1];
-      player.hand.pop();
-      player.discards.push(drawnTile);
-      player.isRiichi = true;
-      this.lastDiscard = drawnTile;
-      this.lastDiscardPlayer = 0;
-      this.riichiSticks++;
-      player.drawnTile = null;
-      this.updateMessage('リーチ！');
+      // リーチ宣言モード: テンパイになる牌を選ばせる
+      this.riichiMode = true;
+      document.getElementById('tsumo-buttons').classList.add('hidden');
+      this.updateMessage('リーチ宣言 — 捨てる牌をクリックしてください（緑枠の牌が切れます）');
       this.render();
-      setTimeout(() => this.afterDiscard(), 600);
+      return;
     } else if (action === 'pon') {
       this.playerMeld('pon', this.lastDiscard);
     } else if (action === 'chi') {
@@ -877,6 +873,29 @@ class MahjongGame {
     // リーチ中はツモ牌しか捨てられない
     if (player.isRiichi && tileIdx !== player.hand.length - 1) {
       this.updateMessage('リーチ中はツモ牌しか捨てられません');
+      return;
+    }
+
+    // リーチ宣言モード: テンパイになる牌のみ捨てられる
+    if (this.riichiMode) {
+      const remaining = player.hand.filter((_, i) => i !== tileIdx);
+      if (!isTenpai(remaining)) {
+        this.updateMessage('この牌を切るとテンパイになりません。別の牌を選んでください。');
+        return;
+      }
+      // リーチ確定
+      this.riichiMode = false;
+      player.hand.splice(tileIdx, 1);
+      player.discards.push(tile);
+      player.drawnTile = null;
+      player.isRiichi = true;
+      this.lastDiscard = tile;
+      this.lastDiscardPlayer = 0;
+      this.selectedTile = null;
+      this.riichiSticks++;
+      this.render();
+      this.updateMessage(`リーチ！ ${tileHtml(tile)} を捨てました`);
+      setTimeout(() => this.afterDiscard(), 600);
       return;
     }
 
@@ -1100,14 +1119,18 @@ class MahjongGame {
     // ツモ牌は常に hand の末尾にある（push で追加するため）
     const hasDrawn = !!player.drawnTile && player.hand.length > 0;
     const drawnTile = hasDrawn ? player.hand[player.hand.length - 1] : null;
-    const sortedMain = hasDrawn
-      ? [...player.hand.slice(0, -1)].sort(compareTile)
-      : [...player.hand].sort(compareTile);
+    const mainTiles = hasDrawn ? [...player.hand.slice(0, -1)].sort(compareTile) : [...player.hand].sort(compareTile);
 
     const makeTileEl = (tile, isDrawn) => {
       const el = document.createElement('span');
       el.className = `tile ${tileClass(tile)}`;
       if (isDrawn) el.classList.add('drawn');
+      // リーチモード: テンパイになる牌をハイライト
+      if (this.riichiMode) {
+        const idx = player.hand.findIndex(t => t === tile);
+        const remaining = player.hand.filter((_, i) => i !== idx);
+        if (isTenpai(remaining)) el.classList.add('riichi-candidate');
+      }
       el.innerHTML = tileDisplay(tile);
       el.onclick = () => {
         if (this.phase === 'discard' && this.currentPlayer === 0) {
@@ -1117,17 +1140,25 @@ class MahjongGame {
       return el;
     };
 
-    // 手牌13枚
-    for (const tile of sortedMain) {
-      handDiv.appendChild(makeTileEl(tile, false));
+    // 手牌をメインとツモ牌の2ブロックに分けて表示
+    // メイン13枚
+    const mainGroup = document.createElement('div');
+    mainGroup.style.cssText = 'display:flex;gap:3px;align-items:flex-end;flex-wrap:nowrap;';
+    for (const tile of mainTiles) {
+      mainGroup.appendChild(makeTileEl(tile, false));
     }
+    handDiv.appendChild(mainGroup);
 
-    // ツモ牌：牌1個分スペース → ツモ牌
+    // ツモ牌（独立コンテナで確実に右端表示）
     if (drawnTile) {
-      const sep = document.createElement('span');
-      sep.className = 'draw-separator';
-      handDiv.appendChild(sep);
-      handDiv.appendChild(makeTileEl(drawnTile, true));
+      const drawGroup = document.createElement('div');
+      drawGroup.style.cssText = 'display:flex;flex-direction:column;align-items:center;margin-left:40px;flex-shrink:0;';
+      const label = document.createElement('div');
+      label.textContent = 'ツモ';
+      label.style.cssText = 'font-size:0.55rem;color:#f0c060;font-weight:bold;line-height:1;margin-bottom:2px;';
+      drawGroup.appendChild(label);
+      drawGroup.appendChild(makeTileEl(drawnTile, true));
+      handDiv.appendChild(drawGroup);
     }
 
     // 副露表示
