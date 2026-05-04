@@ -120,42 +120,69 @@
       gap: 16px;
     }
 
-    .total-card {
-      background: linear-gradient(135deg, #0f2545 0%, #160e38 100%);
-      border: 1px solid #2563eb;
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .sum-card {
       border-radius: 14px;
-      padding: 20px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
+      padding: 18px 20px;
+      border: 1px solid #1e293b;
+      background: #0d1424;
     }
 
-    .total-label {
-      font-size: 0.85rem;
-      color: #93c5fd;
-      margin-bottom: 4px;
+    .sum-card.cost-card {
+      background: linear-gradient(135deg, #0f2545 0%, #160e38 100%);
+      border-color: #2563eb;
     }
 
-    .total-amount {
-      font-size: 2.6rem;
+    .sum-card.income-card {
+      background: linear-gradient(135deg, #052e1c 0%, #0a1f14 100%);
+      border-color: #059669;
+    }
+
+    .sum-card.surplus {
+      background: linear-gradient(135deg, #052e1c 0%, #0a1f14 100%);
+      border-color: #059669;
+    }
+
+    .sum-card.deficit {
+      background: linear-gradient(135deg, #2e0a0a 0%, #1f0505 100%);
+      border-color: #dc2626;
+    }
+
+    .sum-label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .sum-amount {
+      font-size: 1.9rem;
       font-weight: 800;
       color: #fff;
-      line-height: 1;
+      line-height: 1.1;
     }
 
-    .total-amount .unit {
-      font-size: 1.1rem;
+    .sum-unit {
+      font-size: 0.9rem;
       font-weight: 400;
-      color: #93c5fd;
-      margin-left: 4px;
+      color: #94a3b8;
+      margin-left: 3px;
     }
 
-    .total-note {
-      font-size: 0.75rem;
+    .sum-sub {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 5px;
+    }
+
+    .sum-note {
+      font-size: 0.7rem;
       color: #475569;
-      max-width: 300px;
+      margin-top: 6px;
     }
 
     .charts-row {
@@ -240,6 +267,7 @@
     @media (max-width: 860px) {
       .main { grid-template-columns: 1fr; }
       .charts-row { grid-template-columns: 1fr; }
+      .summary-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -352,6 +380,43 @@
     </div>
 
     <div class="section">
+      <div class="section-title">💼 収入・年金</div>
+      <div class="row">
+        <label for="income_level">年収レベル</label>
+        <select id="income_level">
+          <option value="low">低所得（年収300万）</option>
+          <option value="mid" selected>平均的（年収500万）</option>
+          <option value="high">高所得（年収750万）</option>
+          <option value="very_high">高額（年収1,200万）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="employment">雇用形態</label>
+        <select id="employment">
+          <option value="employee" selected>会社員・公務員（厚生年金）</option>
+          <option value="self">自営業・フリーランス（国民年金）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="retire_age">退職年齢</label>
+        <select id="retire_age">
+          <option value="60">60歳</option>
+          <option value="65" selected>65歳</option>
+          <option value="70">70歳まで働く</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="pension_start">年金受給開始</label>
+        <select id="pension_start">
+          <option value="60">60歳（-24%）</option>
+          <option value="65" selected>65歳（標準）</option>
+          <option value="70">70歳（+42%）</option>
+          <option value="75">75歳（+84%）</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-title">👴 老後・終末</div>
       <div class="row">
         <label for="lifespan">想定寿命</label>
@@ -383,13 +448,20 @@
   <!-- ── Results ── -->
   <main class="results">
 
-    <div class="total-card">
-      <div>
-        <div class="total-label">生涯にかかる総費用（推計）</div>
-        <div class="total-amount" id="total_amount">−−−<span class="unit">万円</span></div>
+    <div class="summary-row">
+      <div class="sum-card cost-card">
+        <div class="sum-label">生涯総費用（推計）</div>
+        <div class="sum-amount" id="total_cost_disp">−−−<span class="sum-unit">万円</span></div>
       </div>
-      <div class="total-note">
-        ※あくまで参考値です。個人差・地域差・物価変動などにより実際の費用は大きく異なります。
+      <div class="sum-card income-card">
+        <div class="sum-label">生涯総収入（推計・税引前）</div>
+        <div class="sum-amount" id="total_income_disp">−−−<span class="sum-unit">万円</span></div>
+        <div class="sum-sub" id="income_sub">労働 − ／ 年金 −</div>
+      </div>
+      <div class="sum-card" id="balance_card">
+        <div class="sum-label">収支差額（税引前）</div>
+        <div class="sum-amount" id="total_balance_disp">−−−<span class="sum-unit">万円</span></div>
+        <div class="sum-note">※税・社会保険料等を差し引くと実質は減少します</div>
       </div>
     </div>
 
@@ -455,6 +527,16 @@ const BUY   = { tokyo: 7000, city: 5000, suburb: 3200, rural: 2300 };
 // Monthly transport (万円/月)
 const TRANS = { tokyo: 1.5,  city: 2,   suburb: 2.5, rural: 3   };
 
+// Annual labor income by level (万円/年・平均)
+const INCOME_ANNUAL = { low: 300, mid: 500, high: 750, very_high: 1200 };
+
+// Annual pension at standard age 65 (万円/年)
+const PENSION_EMP  = { low: 130, mid: 170, high: 214, very_high: 258 }; // 厚生年金
+const PENSION_SELF = 78; // 国民年金のみ（満額）
+
+// Adjustment factor for early/late pension start
+const PENSION_ADJ  = { 60: 0.76, 65: 1.0, 70: 1.42, 75: 1.84 };
+
 const COLORS = [
   '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
   '#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4','#a78bfa',
@@ -484,19 +566,23 @@ function childEduCost(style) {
 
 function getParams() {
   return {
-    area:      val('area'),
-    housing:   val('housing'),
-    edu_k:     val('edu_k'),
-    edu_e:     val('edu_e'),
-    edu_m:     val('edu_m'),
-    edu_h:     val('edu_h'),
-    edu_u:     val('edu_u'),
-    marriage:  val('marriage'),
-    children:  +val('children'),
-    child_edu: val('child_edu'),
-    lifespan:  +val('lifespan'),
-    care:      val('care'),
-    ret_life:  val('ret_life'),
+    area:         val('area'),
+    housing:      val('housing'),
+    edu_k:        val('edu_k'),
+    edu_e:        val('edu_e'),
+    edu_m:        val('edu_m'),
+    edu_h:        val('edu_h'),
+    edu_u:        val('edu_u'),
+    marriage:     val('marriage'),
+    children:     +val('children'),
+    child_edu:    val('child_edu'),
+    lifespan:     +val('lifespan'),
+    care:         val('care'),
+    ret_life:     val('ret_life'),
+    income_level: val('income_level'),
+    employment:   val('employment'),
+    retire_age:   +val('retire_age'),
+    pension_start: +val('pension_start'),
   };
 }
 
@@ -655,6 +741,58 @@ function calcDecades(p) {
   };
 }
 
+// ── Income calculation ─────────────────────────────────────────────────
+function calcIncome(p) {
+  const ws = workStart(p.edu_u);
+  const workYears = Math.max(0, p.retire_age - ws);
+  const labor = Math.round(INCOME_ANNUAL[p.income_level] * workYears);
+
+  const basePension = p.employment === 'employee'
+    ? PENSION_EMP[p.income_level]
+    : PENSION_SELF;
+  const annualPension = basePension * PENSION_ADJ[p.pension_start];
+  const pensionYears  = Math.max(0, p.lifespan - p.pension_start);
+  const pension = Math.round(annualPension * pensionYears);
+
+  return { labor, pension, total: labor + pension };
+}
+
+function calcIncomeByDecade(p) {
+  const ls = p.lifespan;
+  const ws = workStart(p.edu_u);
+  const annualIncome = INCOME_ANNUAL[p.income_level];
+  const basePension  = p.employment === 'employee'
+    ? PENSION_EMP[p.income_level]
+    : PENSION_SELF;
+  const annualPension = basePension * PENSION_ADJ[p.pension_start];
+  const decades = new Array(10).fill(0);
+
+  function spreadY(yearlyAmount, a0, a1) {
+    const end = Math.min(a1, ls);
+    if (end <= a0) return;
+    for (let d = 0; d < 10; d++) {
+      const ds = d * 10, de = (d + 1) * 10;
+      const yrs = Math.max(0, Math.min(end, de) - Math.max(a0, ds));
+      decades[d] += yearlyAmount * yrs;
+    }
+  }
+
+  spreadY(annualIncome,  ws,               p.retire_age);
+  spreadY(annualPension, p.pension_start,  ls);
+
+  const count = Math.min(10, Math.ceil(ls / 10) + 1);
+  return decades.slice(0, count).map(v => Math.round(v));
+}
+
+// ── Formatting helper ─────────────────────────────────────────────────
+function fmtMan(v) {
+  const abs = Math.abs(v);
+  const prefix = v < 0 ? '−' : '';
+  return prefix + (abs >= 10000
+    ? `${(abs / 10000).toFixed(2)}億`
+    : abs.toLocaleString());
+}
+
 // ── Chart instances ────────────────────────────────────────────────────
 let pieChart = null, barChart = null;
 
@@ -666,12 +804,25 @@ function updateUI() {
   const values  = entries.map(([, v]) => v);
   const total   = values.reduce((a, b) => a + b, 0);
 
-  // Total display
-  $('total_amount').innerHTML =
-    (total >= 10000
-      ? `${(total / 10000).toFixed(2)}億`
-      : total.toLocaleString()) +
-    '<span class="unit">万円</span>';
+  // Income calculation
+  const inc     = calcIncome(p);
+  const balance = inc.total - total;
+
+  // Cost card
+  $('total_cost_disp').innerHTML = fmtMan(total) + '<span class="sum-unit">万円</span>';
+
+  // Income card
+  $('total_income_disp').innerHTML = fmtMan(inc.total) + '<span class="sum-unit">万円</span>';
+  $('income_sub').textContent =
+    `労働 ${inc.labor.toLocaleString()}万 ／ 年金 ${inc.pension.toLocaleString()}万`;
+
+  // Balance card
+  const balCard = $('balance_card');
+  balCard.classList.remove('surplus', 'deficit');
+  balCard.classList.add(balance >= 0 ? 'surplus' : 'deficit');
+  const sign = balance >= 0 ? '+' : '';
+  $('total_balance_disp').innerHTML =
+    sign + fmtMan(balance) + '<span class="sum-unit">万円</span>';
 
   // Pie chart
   if (pieChart) pieChart.destroy();
@@ -699,24 +850,48 @@ function updateUI() {
     },
   });
 
-  // Bar chart (by decade)
+  // Bar chart (by decade) — costs bars + income line
   const { labels: dLabels, data: dData } = calcDecades(p);
+  const incData = calcIncomeByDecade(p);
   if (barChart) barChart.destroy();
   barChart = new Chart($('bar_canvas'), {
     type: 'bar',
     data: {
       labels: dLabels,
-      datasets: [{
-        label: '費用（万円）',
-        data: dData,
-        backgroundColor: dLabels.map((_, i) => COLORS[i % COLORS.length]),
-        borderRadius: 5,
-      }],
+      datasets: [
+        {
+          type: 'bar',
+          label: '費用',
+          data: dData,
+          backgroundColor: '#3b82f699',
+          borderColor: '#3b82f6',
+          borderWidth: 1,
+          borderRadius: 5,
+          order: 2,
+        },
+        {
+          type: 'line',
+          label: '収入',
+          data: incData,
+          borderColor: '#10b981',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#10b981',
+          pointRadius: 4,
+          tension: 0.3,
+          order: 1,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 10 },
+        },
+      },
       scales: {
         x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#1e293b' } },
         y: {
