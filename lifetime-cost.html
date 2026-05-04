@@ -274,6 +274,7 @@
           <option value="rent">賃貸（生涯）</option>
           <option value="buy_mid" selected>30代で持ち家購入</option>
           <option value="buy_early">20代で持ち家購入</option>
+          <option value="family">家族所有（住居費なし）</option>
         </select>
       </div>
     </div>
@@ -316,6 +317,8 @@
           <option value="private_arts">私立文系</option>
           <option value="private_sci">私立理系</option>
           <option value="vocational">専門学校</option>
+          <option value="grad_national">大学院（国立）</option>
+          <option value="grad_private">大学院（私立）</option>
         </select>
       </div>
     </div>
@@ -440,6 +443,8 @@ const EDU = {
   university: {
     none: 0, national: 116 * 4, private_arts: 155 * 4,
     private_sci: 185 * 4, vocational: 130 * 2,
+    grad_national: 116 * 4 + 80 * 2,   // 学部4年 + 院2年（国立）
+    grad_private:  155 * 4 + 120 * 2,  // 学部4年 + 院2年（私立）
   },
 };
 
@@ -460,7 +465,11 @@ const $ = id => document.getElementById(id);
 const val = id => $(id).value;
 
 function workStart(uni) {
-  return { none: 18, vocational: 20, national: 22, private_arts: 22, private_sci: 22 }[uni];
+  return {
+    none: 18, vocational: 20,
+    national: 22, private_arts: 22, private_sci: 22,
+    grad_national: 24, grad_private: 24,
+  }[uni];
 }
 
 function childEduCost(style) {
@@ -505,7 +514,9 @@ function calculate(p) {
   // Housing
   const rentY = RENT[p.area] * 12;
   let housing;
-  if (p.housing === 'rent') {
+  if (p.housing === 'family') {
+    housing = 0;
+  } else if (p.housing === 'rent') {
     housing = rentY * Math.max(0, ls - ws);
   } else {
     const buyAge = p.housing === 'buy_early' ? 26 : 33;
@@ -599,7 +610,9 @@ function calcDecades(p) {
 
   // Housing
   const rentM = RENT[p.area];
-  if (p.housing === 'rent') {
+  if (p.housing === 'family') {
+    // no housing cost
+  } else if (p.housing === 'rent') {
     spread(rentM, ws, ls);
   } else {
     const buyAge = p.housing === 'buy_early' ? 26 : 33;
