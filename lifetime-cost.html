@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生涯費用シミュレーター</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, 'Yu Gothic', sans-serif;
+      background: #0a0f1e;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f1f3d 0%, #0a0f1e 100%);
+      padding: 20px 32px;
+      border-bottom: 1px solid #1e3a5f;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #93c5fd;
+      white-space: nowrap;
+    }
+
+    header p {
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* ── Settings ── */
+    .settings {
+      background: #0d1424;
+      border-right: 1px solid #1e293b;
+      padding: 20px 16px;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #3b82f6;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .row label {
+      font-size: 0.825rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
+    select {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.825rem;
+      cursor: pointer;
+      max-width: 160px;
+    }
+
+    select:focus { outline: none; border-color: #3b82f6; }
+
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="range"] {
+      width: 110px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    .range-val {
+      font-size: 0.825rem;
+      color: #60a5fa;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* ── Results ── */
+    .results {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .total-card {
+      background: linear-gradient(135deg, #0f2545 0%, #160e38 100%);
+      border: 1px solid #2563eb;
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .total-label {
+      font-size: 0.85rem;
+      color: #93c5fd;
+      margin-bottom: 4px;
+    }
+
+    .total-amount {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .total-amount .unit {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #93c5fd;
+      margin-left: 4px;
+    }
+
+    .total-note {
+      font-size: 0.75rem;
+      color: #475569;
+      max-width: 300px;
+    }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: #0d1424;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 240px;
+    }
+
+    /* ── Table ── */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #475569;
+      padding: 8px 10px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    tbody td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #0f172a;
+      vertical-align: middle;
+    }
+
+    tbody tr:hover td { background: #1e293b22; }
+
+    tfoot td {
+      padding: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border-top: 1px solid #1e293b;
+    }
+
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .muted { color: #475569; font-size: 0.78rem; }
+
+    .dot {
+      display: inline-block;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-right: 7px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    .bar-cell { width: 100px; padding-left: 8px; }
+    .bar-bg { background: #1e293b; border-radius: 4px; height: 5px; overflow: hidden; }
+    .bar-fg { height: 100%; border-radius: 4px; transition: width .3s; }
+
+    @media (max-width: 860px) {
+      .main { grid-template-columns: 1fr; }
+      .charts-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>💰 生涯費用シミュレーター</h1>
+    <p>誕生から死亡まで、一生涯にかかる費用を試算します（日本）</p>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ── Settings ── -->
+  <aside class="settings">
+
+    <div class="section">
+      <div class="section-title">🏠 居住・住まい</div>
+      <div class="row">
+        <label for="area">居住エリア</label>
+        <select id="area">
+          <option value="tokyo">東京都区部</option>
+          <option value="city" selected>大都市圏</option>
+          <option value="suburb">地方都市</option>
+          <option value="rural">地方・郊外</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="housing">住居形態</label>
+        <select id="housing">
+          <option value="rent">賃貸（生涯）</option>
+          <option value="buy_mid" selected>30代で持ち家購入</option>
+          <option value="buy_early">20代で持ち家購入</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📚 教育（本人）</div>
+      <div class="row">
+        <label for="edu_k">幼稚園・保育</label>
+        <select id="edu_k">
+          <option value="public" selected>公立</option>
+          <option value="private">私立</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="edu_e">小学校</label>
+        <select id="edu_e">
+          <option value="public" selected>公立</option>
+          <option value="private">私立</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="edu_m">中学校</label>
+        <select id="edu_m">
+          <option value="public" selected>公立</option>
+          <option value="private">私立</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="edu_h">高校</label>
+        <select id="edu_h">
+          <option value="public" selected>公立</option>
+          <option value="private">私立</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="edu_u">大学・専門</label>
+        <select id="edu_u">
+          <option value="none">進学なし</option>
+          <option value="national" selected>国立大学</option>
+          <option value="private_arts">私立文系</option>
+          <option value="private_sci">私立理系</option>
+          <option value="vocational">専門学校</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">💍 ライフイベント</div>
+      <div class="row">
+        <label for="marriage">結婚</label>
+        <select id="marriage">
+          <option value="yes" selected>あり</option>
+          <option value="no">なし</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="children">子供の人数</label>
+        <select id="children">
+          <option value="0">0人</option>
+          <option value="1">1人</option>
+          <option value="2" selected>2人</option>
+          <option value="3">3人</option>
+        </select>
+      </div>
+      <div class="row" id="child_edu_row">
+        <label for="child_edu">子供の教育</label>
+        <select id="child_edu">
+          <option value="all_public" selected>すべて公立</option>
+          <option value="mix">公立＋私立大</option>
+          <option value="all_private">すべて私立</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">👴 老後・終末</div>
+      <div class="row">
+        <label for="lifespan">想定寿命</label>
+        <div class="range-wrap">
+          <input type="range" id="lifespan" min="70" max="100" value="85" step="1">
+          <span class="range-val" id="lifespan_disp">85歳</span>
+        </div>
+      </div>
+      <div class="row">
+        <label for="care">介護期間</label>
+        <select id="care">
+          <option value="none">なし</option>
+          <option value="short" selected>短期（1〜2年）</option>
+          <option value="long">長期（5年以上）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="ret_life">老後の生活水準</label>
+        <select id="ret_life">
+          <option value="modest">質素（月20万）</option>
+          <option value="normal" selected>普通（月25万）</option>
+          <option value="comfortable">ゆとり（月30万）</option>
+        </select>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── Results ── -->
+  <main class="results">
+
+    <div class="total-card">
+      <div>
+        <div class="total-label">生涯にかかる総費用（推計）</div>
+        <div class="total-amount" id="total_amount">−−−<span class="unit">万円</span></div>
+      </div>
+      <div class="total-note">
+        ※あくまで参考値です。個人差・地域差・物価変動などにより実際の費用は大きく異なります。
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-title">カテゴリ別内訳</div>
+        <div class="chart-wrap"><canvas id="pie_canvas"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">年代別費用</div>
+        <div class="chart-wrap"><canvas id="bar_canvas"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">詳細内訳</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>カテゴリ</th>
+              <th class="num">金額（万円）</th>
+              <th class="num">割合</th>
+              <th class="bar-cell"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+          <tfoot>
+            <tr>
+              <td>合計</td>
+              <td class="num" id="tfoot_total">−</td>
+              <td></td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+'use strict';
+
+// ── Cost tables (万円) ──────────────────────────────────────────────────
+const EDU = {
+  kindergarten: { public: 49 * 3,  private: 92 * 3  },
+  elementary:   { public: 35 * 6,  private: 166 * 6 },
+  middle:       { public: 53 * 3,  private: 143 * 3 },
+  high:         { public: 51 * 3,  private: 105 * 3 },
+  university: {
+    none: 0, national: 116 * 4, private_arts: 155 * 4,
+    private_sci: 185 * 4, vocational: 130 * 2,
+  },
+};
+
+// Monthly rent (万円/月)
+const RENT  = { tokyo: 13, city: 9,  suburb: 6,   rural: 4   };
+// Purchase total including loan interest & maintenance (万円)
+const BUY   = { tokyo: 7000, city: 5000, suburb: 3200, rural: 2300 };
+// Monthly transport (万円/月)
+const TRANS = { tokyo: 1.5,  city: 2,   suburb: 2.5, rural: 3   };
+
+const COLORS = [
+  '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
+  '#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4','#a78bfa',
+];
+
+// ── Helpers ────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const val = id => $(id).value;
+
+function workStart(uni) {
+  return { none: 18, vocational: 20, national: 22, private_arts: 22, private_sci: 22 }[uni];
+}
+
+function childEduCost(style) {
+  const base = EDU.kindergarten.public + EDU.elementary.public
+             + EDU.middle.public + EDU.high.public;
+  if (style === 'all_public')  return base + EDU.university.national;
+  if (style === 'mix')         return base + EDU.university.private_arts;
+  // all_private
+  return EDU.kindergarten.private + EDU.elementary.private
+       + EDU.middle.private + EDU.high.private + EDU.university.private_arts;
+}
+
+function getParams() {
+  return {
+    area:      val('area'),
+    housing:   val('housing'),
+    edu_k:     val('edu_k'),
+    edu_e:     val('edu_e'),
+    edu_m:     val('edu_m'),
+    edu_h:     val('edu_h'),
+    edu_u:     val('edu_u'),
+    marriage:  val('marriage'),
+    children:  +val('children'),
+    child_edu: val('child_edu'),
+    lifespan:  +val('lifespan'),
+    care:      val('care'),
+    ret_life:  val('ret_life'),
+  };
+}
+
+// ── Main calculation ───────────────────────────────────────────────────
+function calculate(p) {
+  const ls = p.lifespan;
+  const ws = workStart(p.edu_u);
+  const marry = p.marriage === 'yes' ? 28 : ls + 1;
+
+  // Education (self)
+  const education = EDU.kindergarten[p.edu_k] + EDU.elementary[p.edu_e]
+                  + EDU.middle[p.edu_m] + EDU.high[p.edu_h]
+                  + EDU.university[p.edu_u];
+
+  // Housing
+  const rentY = RENT[p.area] * 12;
+  let housing;
+  if (p.housing === 'rent') {
+    housing = rentY * Math.max(0, ls - ws);
+  } else {
+    const buyAge = p.housing === 'buy_early' ? 26 : 33;
+    housing = Math.max(0, rentY * (buyAge - ws)) + BUY[p.area];
+  }
+
+  // Living expenses (食費・光熱費・通信費・衣料・娯楽 — housing excluded)
+  const retM = { modest: 18, normal: 22, comfortable: 28 }[p.ret_life];
+  let living = 0;
+  living += 3.5 * 12 * ws;                                         // childhood
+  living += 11  * 12 * Math.max(0, Math.min(marry, ls) - ws);     // single adult
+  if (p.marriage === 'yes') {
+    living += 15 * 12 * Math.max(0, Math.min(65, ls) - marry);    // married working
+    living += retM * 12 * Math.max(0, ls - 65);                   // retirement
+  } else {
+    living += retM * 12 * Math.max(0, ls - 65);                   // retirement (single)
+  }
+
+  // Medical
+  let medical = 0.5 * 12 * Math.min(40, ls);
+  if (ls > 40) medical += 2.0 * 12 * (Math.min(ls, 65) - 40);
+  if (ls > 65) medical += 5.5 * 12 * (ls - 65);
+
+  // Transport & insurance (from work start)
+  const adultYears = Math.max(0, ls - ws);
+  const transport  = TRANS[p.area] * 12 * adultYears;
+  const insurance  = 3.5 * 12 * adultYears;  // 健康保険・年金・生命保険等
+
+  // Marriage events
+  const wedding = p.marriage === 'yes' ? 380 : 0;
+
+  // Children (living costs + education per child)
+  let children = 0;
+  if (p.children > 0) {
+    const perChild = 50                       // birth
+                   + 5 * 12 * 22             // monthly living until 22
+                   + childEduCost(p.child_edu);
+    children = p.children * perChild;
+  }
+
+  // Elderly care
+  const care = { none: 0, short: 200, long: 700 }[p.care];
+
+  // Funeral
+  const funeral = 150;
+
+  return {
+    '出産費（本人）':      50,
+    '教育費（本人）':      Math.round(education),
+    '住居費':             Math.round(housing),
+    '生活費':             Math.round(living),
+    '医療費':             Math.round(medical),
+    '交通費':             Math.round(transport),
+    '保険料':             Math.round(insurance),
+    '結婚費':             Math.round(wedding),
+    '子育て・子供教育費':  Math.round(children),
+    '介護費':             care,
+    '葬儀費':             funeral,
+  };
+}
+
+// ── Decade breakdown ───────────────────────────────────────────────────
+function calcDecades(p) {
+  const ls = p.lifespan;
+  const ws = workStart(p.edu_u);
+  const marry = p.marriage === 'yes' ? 28 : ls + 1;
+  const retM = { modest: 18, normal: 22, comfortable: 28 }[p.ret_life];
+  const decades = new Array(10).fill(0);
+
+  function spread(monthlyMAN, a0, a1) {
+    const end = Math.min(a1, ls);
+    if (end <= a0) return;
+    for (let d = 0; d < 10; d++) {
+      const ds = d * 10, de = (d + 1) * 10;
+      const yrs = Math.max(0, Math.min(end, de) - Math.max(a0, ds));
+      decades[d] += monthlyMAN * 12 * yrs;
+    }
+  }
+
+  function lump(man, age) {
+    if (age < 0 || age >= ls) return;
+    decades[Math.min(9, Math.floor(age / 10))] += man;
+  }
+
+  // Education lumps
+  lump(EDU.kindergarten[p.edu_k], 3);
+  lump(EDU.elementary[p.edu_e],   6);
+  lump(EDU.middle[p.edu_m],      12);
+  lump(EDU.high[p.edu_h],        15);
+  lump(EDU.university[p.edu_u],  18);
+
+  // Housing
+  const rentM = RENT[p.area];
+  if (p.housing === 'rent') {
+    spread(rentM, ws, ls);
+  } else {
+    const buyAge = p.housing === 'buy_early' ? 26 : 33;
+    spread(rentM, ws, buyAge);
+    lump(BUY[p.area], buyAge);
+  }
+
+  // Living
+  spread(3.5,  0,     ws);
+  spread(11,   ws,    Math.min(marry, ls));
+  if (p.marriage === 'yes') {
+    spread(15, marry, Math.min(65, ls));
+    spread(retM, 65,  ls);
+  } else {
+    spread(retM, 65,  ls);
+  }
+
+  // Medical
+  spread(0.5, 0,  Math.min(40, ls));
+  spread(2.0, 40, Math.min(65, ls));
+  spread(5.5, 65, ls);
+
+  // Transport + insurance
+  spread(TRANS[p.area] + 3.5, ws, ls);
+
+  // One-time: birth, wedding, children, care, funeral
+  lump(50, 0);
+  if (p.marriage === 'yes') lump(380, marry);
+  if (p.children > 0) {
+    const perChild = 50 + 5 * 12 * 22 + childEduCost(p.child_edu);
+    lump(p.children * perChild, marry + 1);
+  }
+  lump({ none: 0, short: 200, long: 700 }[p.care], ls - 5);
+  lump(150, ls - 1);
+
+  const count = Math.min(10, Math.ceil(ls / 10) + 1);
+  return {
+    labels: ['0代','10代','20代','30代','40代','50代','60代','70代','80代','90代'].slice(0, count),
+    data:   decades.slice(0, count).map(v => Math.round(v)),
+  };
+}
+
+// ── Chart instances ────────────────────────────────────────────────────
+let pieChart = null, barChart = null;
+
+function updateUI() {
+  const p = getParams();
+  const bd = calculate(p);
+  const entries = Object.entries(bd).filter(([, v]) => v > 0);
+  const labels  = entries.map(([k]) => k);
+  const values  = entries.map(([, v]) => v);
+  const total   = values.reduce((a, b) => a + b, 0);
+
+  // Total display
+  $('total_amount').innerHTML =
+    (total >= 10000
+      ? `${(total / 10000).toFixed(2)}億`
+      : total.toLocaleString()) +
+    '<span class="unit">万円</span>';
+
+  // Pie chart
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart($('pie_canvas'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: COLORS, borderWidth: 0, hoverOffset: 6 }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 8 },
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx =>
+              ` ${ctx.label}: ${ctx.raw.toLocaleString()}万円 (${(ctx.raw / total * 100).toFixed(1)}%)`,
+          },
+        },
+      },
+    },
+  });
+
+  // Bar chart (by decade)
+  const { labels: dLabels, data: dData } = calcDecades(p);
+  if (barChart) barChart.destroy();
+  barChart = new Chart($('bar_canvas'), {
+    type: 'bar',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        label: '費用（万円）',
+        data: dData,
+        backgroundColor: dLabels.map((_, i) => COLORS[i % COLORS.length]),
+        borderRadius: 5,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#1e293b' } },
+        y: {
+          ticks: {
+            color: '#94a3b8',
+            font: { size: 10 },
+            callback: v => v >= 10000 ? `${v / 10000}億` : `${v.toLocaleString()}万`,
+          },
+          grid: { color: '#1e293b' },
+        },
+      },
+    },
+  });
+
+  // Breakdown table
+  const tbody = $('tbody');
+  tbody.innerHTML = '';
+  const maxVal = Math.max(...values);
+  entries.forEach(([label, val], i) => {
+    const color = COLORS[i % COLORS.length];
+    const pct   = (val / total * 100).toFixed(1);
+    const w     = (val / maxVal * 100).toFixed(1);
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          <span class="dot" style="background:${color}"></span>${label}
+        </td>
+        <td class="num">${val.toLocaleString()}</td>
+        <td class="num muted">${pct}%</td>
+        <td class="bar-cell">
+          <div class="bar-bg">
+            <div class="bar-fg" style="width:${w}%;background:${color}"></div>
+          </div>
+        </td>
+      </tr>`;
+  });
+  $('tfoot_total').textContent = total.toLocaleString() + ' 万円';
+
+  // Toggle child education visibility
+  $('child_edu_row').style.display = p.children > 0 ? '' : 'none';
+}
+
+// ── Event wiring ────────────────────────────────────────────────────────
+document.querySelectorAll('select, input[type=range]').forEach(el => {
+  el.addEventListener('input', () => {
+    if (el.id === 'lifespan') $('lifespan_disp').textContent = el.value + '歳';
+    updateUI();
+  });
+  el.addEventListener('change', updateUI);
+});
+
+updateUI();
+</script>
+</body>
+</html>
