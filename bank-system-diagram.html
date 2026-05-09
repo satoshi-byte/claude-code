@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地方銀行 システム鳥瞰図</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+      color: #f1f5f9;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+
+    .diagram {
+      display: grid;
+      grid-template-rows: auto auto auto auto;
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ─── Layer ─── */
+    .layer {
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+    }
+
+    .layer-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      opacity: 0.3;
+      background: currentColor;
+    }
+
+    .layer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* ─── Nodes ─── */
+    .node {
+      border-radius: 8px;
+      padding: 10px 14px;
+      min-width: 130px;
+      flex: 1;
+      cursor: default;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+
+    .node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .node-icon {
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .node-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .node-desc {
+      font-size: 0.68rem;
+      opacity: 0.75;
+      line-height: 1.4;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.55rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── Layer: Customers ─── */
+    .layer-customers {
+      background: linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.6));
+      border: 1px solid rgba(148,163,184,0.15);
+    }
+    .layer-customers .layer-label { color: #94a3b8; }
+
+    /* ─── Layer: Front Channels ─── */
+    .layer-front {
+      background: linear-gradient(135deg, rgba(30,58,138,0.35), rgba(15,23,42,0.6));
+      border: 1px solid rgba(96,165,250,0.25);
+    }
+    .layer-front .layer-label { color: #60a5fa; }
+    .layer-front .node {
+      background: linear-gradient(135deg, #1e3a8a, #1e40af);
+      border: 1px solid rgba(96,165,250,0.3);
+      color: #bfdbfe;
+    }
+    .layer-front .badge { background: rgba(96,165,250,0.2); color: #93c5fd; }
+
+    /* ─── Layer: DMZ / API GW ─── */
+    .layer-dmz {
+      background: linear-gradient(135deg, rgba(76,29,149,0.25), rgba(15,23,42,0.6));
+      border: 1px solid rgba(167,139,250,0.2);
+    }
+    .layer-dmz .layer-label { color: #a78bfa; }
+    .layer-dmz .node {
+      background: linear-gradient(135deg, #3b0764, #4c1d95);
+      border: 1px solid rgba(167,139,250,0.3);
+      color: #ddd6fe;
+    }
+    .layer-dmz .badge { background: rgba(167,139,250,0.2); color: #c4b5fd; }
+
+    /* ─── Layer: Core Banking ─── */
+    .layer-core {
+      background: linear-gradient(135deg, rgba(20,83,45,0.35), rgba(15,23,42,0.6));
+      border: 1px solid rgba(74,222,128,0.2);
+    }
+    .layer-core .layer-label { color: #4ade80; }
+    .layer-core .node {
+      background: linear-gradient(135deg, #14532d, #15803d);
+      border: 1px solid rgba(74,222,128,0.3);
+      color: #bbf7d0;
+    }
+    .layer-core .badge { background: rgba(74,222,128,0.2); color: #86efac; }
+
+    /* ─── Layer: Info / Analytics ─── */
+    .layer-info {
+      background: linear-gradient(135deg, rgba(124,45,18,0.25), rgba(15,23,42,0.6));
+      border: 1px solid rgba(251,146,60,0.2);
+    }
+    .layer-info .layer-label { color: #fb923c; }
+    .layer-info .node {
+      background: linear-gradient(135deg, #7c2d12, #9a3412);
+      border: 1px solid rgba(251,146,60,0.3);
+      color: #fed7aa;
+    }
+    .layer-info .badge { background: rgba(251,146,60,0.2); color: #fdba74; }
+
+    /* ─── Layer: Infra / Security ─── */
+    .layer-infra {
+      background: linear-gradient(135deg, rgba(30,41,59,0.5), rgba(15,23,42,0.7));
+      border: 1px solid rgba(100,116,139,0.3);
+    }
+    .layer-infra .layer-label { color: #64748b; }
+    .layer-infra .node {
+      background: linear-gradient(135deg, #1e293b, #334155);
+      border: 1px solid rgba(100,116,139,0.3);
+      color: #cbd5e1;
+    }
+    .layer-infra .badge { background: rgba(100,116,139,0.2); color: #94a3b8; }
+
+    /* ─── Layer: External ─── */
+    .layer-external {
+      background: linear-gradient(135deg, rgba(157,23,77,0.2), rgba(15,23,42,0.6));
+      border: 1px solid rgba(244,114,182,0.2);
+    }
+    .layer-external .layer-label { color: #f472b6; }
+    .layer-external .node {
+      background: linear-gradient(135deg, #831843, #9d174d);
+      border: 1px solid rgba(244,114,182,0.3);
+      color: #fce7f3;
+    }
+    .layer-external .badge { background: rgba(244,114,182,0.2); color: #f9a8d4; }
+
+    /* ─── Customer icons row ─── */
+    .customer-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .customer-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+    }
+
+    /* ─── Arrows between layers ─── */
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      color: #475569;
+      font-size: 0.72rem;
+      height: 12px;
+      margin: -8px 0;
+    }
+
+    .arrow-row span { letter-spacing: 0.03em; }
+
+    /* ─── Legend ─── */
+    .legend {
+      max-width: 1200px;
+      margin: 20px auto 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.7rem;
+      color: #64748b;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    /* ─── Tooltip ─── */
+    .node[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.68rem;
+      color: #e2e8f0;
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    /* ─── Connector SVG ─── */
+    .connector {
+      width: 100%;
+      height: 30px;
+      overflow: visible;
+      display: block;
+      margin: -4px 0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>地方銀行 システム鳥瞰図</h1>
+<p class="subtitle">Regional Bank — System Architecture Overview</p>
+
+<div class="diagram">
+
+  <!-- 顧客層 -->
+  <div class="layer layer-customers">
+    <div class="layer-label">顧客・利用者</div>
+    <div class="customer-row">
+      <div class="customer-chip">👤 個人顧客</div>
+      <div class="customer-chip">🏢 法人顧客</div>
+      <div class="customer-chip">🏛️ 公共・自治体</div>
+      <div class="customer-chip">🤝 代理店・パートナー</div>
+    </div>
+  </div>
+
+  <!-- フロントチャネル -->
+  <div class="layer layer-front">
+    <div class="layer-label">フロントチャネル（接点システム）</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="出入金・振込・残高照会">
+        <div class="node-icon">🏧</div>
+        <div class="node-title">ATM</div>
+        <div class="node-desc">自行ATM / 提携ATM</div>
+        <span class="badge">24/365</span>
+      </div>
+      <div class="node" data-tip="個人・法人向けオンラインサービス">
+        <div class="node-icon">🖥️</div>
+        <div class="node-title">インターネットバンキング</div>
+        <div class="node-desc">個人IB / 法人IB / EB</div>
+        <span class="badge">Web</span>
+      </div>
+      <div class="node" data-tip="スマートフォン向けアプリ">
+        <div class="node-icon">📱</div>
+        <div class="node-title">モバイルアプリ</div>
+        <div class="node-desc">iOS / Android<br>QRコード決済連携</div>
+        <span class="badge">App</span>
+      </div>
+      <div class="node" data-tip="窓口での取引処理端末">
+        <div class="node-icon">🏦</div>
+        <div class="node-title">窓口端末 (テラー)</div>
+        <div class="node-desc">入出金・各種手続き</div>
+        <span class="badge">Branch</span>
+      </div>
+      <div class="node" data-tip="融資・相談業務の支援システム">
+        <div class="node-icon">💼</div>
+        <div class="node-title">渉外端末</div>
+        <div class="node-desc">外回り営業・融資相談</div>
+        <span class="badge">Mobile</span>
+      </div>
+      <div class="node" data-tip="コールセンターのオペレーター支援">
+        <div class="node-icon">📞</div>
+        <div class="node-title">コールセンター</div>
+        <div class="node-desc">CTI / 音声AI / チャット</div>
+        <span class="badge">Contact</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DMZ / ミドルウェア層 -->
+  <div class="layer layer-dmz">
+    <div class="layer-label">DMZ・セキュリティ・API ゲートウェイ層</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="外部からの通信を制御するゲートウェイ">
+        <div class="node-icon">🔀</div>
+        <div class="node-title">API ゲートウェイ</div>
+        <div class="node-desc">認証・レート制限・ルーティング</div>
+        <span class="badge">REST / gRPC</span>
+      </div>
+      <div class="node" data-tip="本人確認・不正アクセス検知">
+        <div class="node-icon">🔐</div>
+        <div class="node-title">認証・認可基盤</div>
+        <div class="node-desc">MFA / FIDO2 / OAuth 2.0</div>
+        <span class="badge">IdP</span>
+      </div>
+      <div class="node" data-tip="不正取引をリアルタイムで検知">
+        <div class="node-icon">🛡️</div>
+        <div class="node-title">不正検知 (FDS)</div>
+        <div class="node-desc">AIスコアリング / ルールエンジン</div>
+        <span class="badge">Real-time</span>
+      </div>
+      <div class="node" data-tip="電文変換・連携ハブ">
+        <div class="node-icon">🔄</div>
+        <div class="node-title">ESB / メッセージバス</div>
+        <div class="node-desc">電文変換 / キューイング</div>
+        <span class="badge">Middleware</span>
+      </div>
+      <div class="node" data-tip="Open Banking向けAPIの公開">
+        <div class="node-icon">🌐</div>
+        <div class="node-title">オープン API 基盤</div>
+        <div class="node-desc">銀行 API 公開 / FinTech 連携</div>
+        <span class="badge">Open Banking</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 勘定系 / コアバンキング -->
+  <div class="layer layer-core">
+    <div class="layer-label">勘定系・コアバンキングシステム</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="普通・定期・積立預金の管理">
+        <div class="node-icon">💰</div>
+        <div class="node-title">預金システム</div>
+        <div class="node-desc">普通 / 定期 / 外貨預金</div>
+        <span class="badge">Core</span>
+      </div>
+      <div class="node" data-tip="個人・事業者向けローン管理">
+        <div class="node-icon">📋</div>
+        <div class="node-title">融資システム</div>
+        <div class="node-desc">個人ローン / 事業融資<br>住宅ローン</div>
+        <span class="badge">Core</span>
+      </div>
+      <div class="node" data-tip="振込・振替・内国為替の処理">
+        <div class="node-icon">↔️</div>
+        <div class="node-title">内国為替システム</div>
+        <div class="node-desc">振込 / 振替 / 代金取立</div>
+        <span class="badge">Core</span>
+      </div>
+      <div class="node" data-tip="外貨取引・貿易金融の管理">
+        <div class="node-icon">🌏</div>
+        <div class="node-title">外国為替システム</div>
+        <div class="node-desc">外貨送金 / 貿易金融</div>
+        <span class="badge">Core</span>
+      </div>
+      <div class="node" data-tip="金融商品の管理・販売">
+        <div class="node-icon">📈</div>
+        <div class="node-title">投信・証券仲介</div>
+        <div class="node-desc">投資信託 / 国債 / 保険</div>
+        <span class="badge">Core</span>
+      </div>
+      <div class="node" data-tip="日次・月次の会計締め処理">
+        <div class="node-icon">📊</div>
+        <div class="node-title">総合口座元帳</div>
+        <div class="node-desc">元帳管理 / 日次バッチ</div>
+        <span class="badge">Core</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 情報系・分析系 -->
+  <div class="layer layer-info">
+    <div class="layer-label">情報系・分析・マーケティングシステム</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="顧客情報の統合管理・営業活動支援">
+        <div class="node-icon">👥</div>
+        <div class="node-title">CRM</div>
+        <div class="node-desc">顧客情報管理 / SFA<br>キャンペーン管理</div>
+        <span class="badge">Marketing</span>
+      </div>
+      <div class="node" data-tip="全社データの統合・分析基盤">
+        <div class="node-icon">🗄️</div>
+        <div class="node-title">DWH / データ基盤</div>
+        <div class="node-desc">ETL / データレイク<br>BIダッシュボード</div>
+        <span class="badge">Analytics</span>
+      </div>
+      <div class="node" data-tip="AIを活用した業務自動化・予測">
+        <div class="node-icon">🤖</div>
+        <div class="node-title">AI・機械学習基盤</div>
+        <div class="node-desc">審査AI / 与信スコアリング<br>チャットボット</div>
+        <span class="badge">AI/ML</span>
+      </div>
+      <div class="node" data-tip="法令対応・リスク管理レポート">
+        <div class="node-icon">📑</div>
+        <div class="node-title">レポーティング</div>
+        <div class="node-desc">金融庁報告 / ALM<br>統合リスク管理</div>
+        <span class="badge">Compliance</span>
+      </div>
+      <div class="node" data-tip="AML・コンプライアンス管理">
+        <div class="node-icon">⚖️</div>
+        <div class="node-title">AML / コンプライアンス</div>
+        <div class="node-desc">マネロン対策 / 制裁スクリーニング</div>
+        <span class="badge">AML</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- インフラ・セキュリティ -->
+  <div class="layer layer-infra">
+    <div class="layer-label">インフラ・セキュリティ・運用基盤</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="本番・DR環境の物理・仮想サーバ">
+        <div class="node-icon">🖥️</div>
+        <div class="node-title">データセンター / DC</div>
+        <div class="node-desc">本番DC / DR-DC (地理冗長)</div>
+        <span class="badge">On-Prem</span>
+      </div>
+      <div class="node" data-tip="クラウドを活用した柔軟な基盤">
+        <div class="node-icon">☁️</div>
+        <div class="node-title">プライベートクラウド</div>
+        <div class="node-desc">仮想化基盤 / コンテナ<br>ハイブリッドクラウド</div>
+        <span class="badge">Cloud</span>
+      </div>
+      <div class="node" data-tip="システム監視・障害対応">
+        <div class="node-icon">📡</div>
+        <div class="node-title">監視・運用 (NOC)</div>
+        <div class="node-desc">統合監視 / インシデント管理<br>SIEM / SOC</div>
+        <span class="badge">Ops</span>
+      </div>
+      <div class="node" data-tip="情報漏洩・サイバー攻撃対策">
+        <div class="node-icon">🔒</div>
+        <div class="node-title">セキュリティ基盤</div>
+        <div class="node-desc">FW / WAF / IDS・IPS<br>ゼロトラスト</div>
+        <span class="badge">Security</span>
+      </div>
+      <div class="node" data-tip="事業継続・災害復旧計画">
+        <div class="node-icon">🔁</div>
+        <div class="node-title">BCP / DR 基盤</div>
+        <div class="node-desc">バックアップ / フェイルオーバー<br>RTO: 2h / RPO: 15min</div>
+        <span class="badge">BCP</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 外部接続 -->
+  <div class="layer layer-external">
+    <div class="layer-label">外部接続・決済ネットワーク</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="国内銀行間の振込・決済ネットワーク">
+        <div class="node-icon">🏛️</div>
+        <div class="node-title">全銀ネット (ZENGIN)</div>
+        <div class="node-desc">国内銀行間振込<br>モアタイム対応</div>
+        <span class="badge">決済</span>
+      </div>
+      <div class="node" data-tip="日本銀行との資金決済">
+        <div class="node-icon">🏦</div>
+        <div class="node-title">日銀ネット (BOJ-NET)</div>
+        <div class="node-desc">日銀当座預金<br>国債決済</div>
+        <span class="badge">中央銀行</span>
+      </div>
+      <div class="node" data-tip="国際送金・外為電文ネットワーク">
+        <div class="node-icon">🌐</div>
+        <div class="node-title">SWIFT</div>
+        <div class="node-desc">国際送金 / 外為電文<br>コルレス銀行</div>
+        <span class="badge">国際</span>
+      </div>
+      <div class="node" data-tip="Visa/Mastercardなどのカードネットワーク">
+        <div class="node-icon">💳</div>
+        <div class="node-title">カードネットワーク</div>
+        <div class="node-desc">VISA / Mastercard<br>JCB / クレデンシャル</div>
+        <span class="badge">Card</span>
+      </div>
+      <div class="node" data-tip="QRコード・電子マネー決済連携">
+        <div class="node-icon">📲</div>
+        <div class="node-title">QR / 電子マネー</div>
+        <div class="node-desc">PayPay / d払い<br>交通系IC連携</div>
+        <span class="badge">FinTech</span>
+      </div>
+      <div class="node" data-tip="信用情報機関との与信照会">
+        <div class="node-icon">📂</div>
+        <div class="node-title">信用情報機関</div>
+        <div class="node-desc">CIC / JICC / KSC<br>与信照会</div>
+        <span class="badge">与信</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1e40af"></div>フロントチャネル</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4c1d95"></div>DMZ / API GW</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#15803d"></div>勘定系コアバンキング</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9a3412"></div>情報系・分析系</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#334155"></div>インフラ・セキュリティ</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9d174d"></div>外部接続・決済NW</div>
+  <span style="margin-left:auto">※ ノードにカーソルを合わせると説明が表示されます</span>
+</div>
+
+<!-- SVG Flow Lines -->
+<svg style="display:none" aria-hidden="true"></svg>
+
+</body>
+</html>
