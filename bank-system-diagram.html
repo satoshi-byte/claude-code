@@ -175,6 +175,19 @@
     }
     .layer-info .badge { background: rgba(251,146,60,0.2); color: #fdba74; }
 
+    /* ─── Layer: Business Operations ─── */
+    .layer-ops {
+      background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(15,23,42,0.6));
+      border: 1px solid rgba(45,212,191,0.2);
+    }
+    .layer-ops .layer-label { color: #2dd4bf; }
+    .layer-ops .node {
+      background: linear-gradient(135deg, #134e4a, #0f766e);
+      border: 1px solid rgba(45,212,191,0.3);
+      color: #ccfbf1;
+    }
+    .layer-ops .badge { background: rgba(45,212,191,0.2); color: #5eead4; }
+
     /* ─── Layer: Infra / Security ─── */
     .layer-infra {
       background: linear-gradient(135deg, rgba(30,41,59,0.5), rgba(15,23,42,0.7));
@@ -440,6 +453,43 @@
     </div>
   </div>
 
+  <!-- 業務系 -->
+  <div class="layer layer-ops">
+    <div class="layer-label">業務系システム</div>
+    <div class="layer-grid">
+      <div class="node" data-tip="融資業務の申込・審査・実行・管理">
+        <div class="node-icon">🏗️</div>
+        <div class="node-title">融資系システム</div>
+        <div class="node-desc">申込 / 審査 / 実行<br>期中管理 / 回収</div>
+        <span class="badge">Loan</span>
+      </div>
+      <div class="node" data-tip="各種事務処理の集中・標準化">
+        <div class="node-icon">📬</div>
+        <div class="node-title">事務集中系システム</div>
+        <div class="node-desc">書類管理 / 印鑑照合<br>口座開設 / 各種届出</div>
+        <span class="badge">Back Office</span>
+      </div>
+      <div class="node" data-tip="法令・規制対応の業務システム">
+        <div class="node-icon">🗂️</div>
+        <div class="node-title">規制系システム</div>
+        <div class="node-desc">マイナンバー管理<br>犯収法 / 反社チェック</div>
+        <span class="badge">Regulatory</span>
+      </div>
+      <div class="node" data-tip="財務・会計・管理会計の統合基盤">
+        <div class="node-icon">🧾</div>
+        <div class="node-title">ERP</div>
+        <div class="node-desc">財務会計 / 管理会計<br>固定資産 / 購買管理</div>
+        <span class="badge">ERP</span>
+      </div>
+      <div class="node" data-tip="人事・給与・勤怠管理システム">
+        <div class="node-icon">👤</div>
+        <div class="node-title">人事系システム</div>
+        <div class="node-desc">人事管理 / 給与計算<br>勤怠 / 人材育成</div>
+        <span class="badge">HR</span>
+      </div>
+    </div>
+  </div>
+
   <!-- 情報系・分析系 -->
   <div class="layer layer-info">
     <div class="layer-label">情報系・分析・マーケティングシステム</div>
@@ -511,6 +561,18 @@
         <div class="node-desc">バックアップ / フェイルオーバー<br>RTO: 2h / RPO: 15min</div>
         <span class="badge">BCP</span>
       </div>
+      <div class="node" data-tip="行内ネットワーク・拠点間通信基盤">
+        <div class="node-icon">🔗</div>
+        <div class="node-title">イントラネット</div>
+        <div class="node-desc">LAN / WAN / VPN<br>拠点間専用線</div>
+        <span class="badge">Network</span>
+      </div>
+      <div class="node" data-tip="Microsoft 365によるグループウェア基盤">
+        <div class="node-icon">💬</div>
+        <div class="node-title">M365</div>
+        <div class="node-desc">Teams / Exchange<br>SharePoint / OneDrive</div>
+        <span class="badge">M365</span>
+      </div>
     </div>
   </div>
 
@@ -564,6 +626,7 @@
   <div class="legend-item"><div class="legend-dot" style="background:#1e40af"></div>フロントチャネル</div>
   <div class="legend-item"><div class="legend-dot" style="background:#4c1d95"></div>DMZ / API GW</div>
   <div class="legend-item"><div class="legend-dot" style="background:#15803d"></div>勘定系コアバンキング</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0f766e"></div>業務系</div>
   <div class="legend-item"><div class="legend-dot" style="background:#9a3412"></div>情報系・分析系</div>
   <div class="legend-item"><div class="legend-dot" style="background:#334155"></div>インフラ・セキュリティ</div>
   <div class="legend-item"><div class="legend-dot" style="background:#9d174d"></div>外部接続・決済NW</div>
