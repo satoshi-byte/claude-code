@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 START_URL = "https://www.boy.co.jp/"
-MAX_PAGES = 30
+MAX_PAGES = 80
 OUTPUT = Path(__file__).parent / "data" / "content.json"
 
 SKIP_EXTENSIONS = {
