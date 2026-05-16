@@ -9,47 +9,60 @@ app = Flask(__name__, static_folder="static")
 DATA_FILE = Path(__file__).parent / "data" / "content.json"
 MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 1024
+MAX_CHARS_PER_PAGE = 3000
+TOP_K_PAGES = 8  # 質問に関連するページを最大8件選ぶ
 
-
-MAX_PAGES_IN_PROMPT = 10
-MAX_CHARS_PER_PAGE = 2000
-
-
-def build_system_prompt(pages: list[dict]) -> str:
-    sections = []
-    for p in pages[:MAX_PAGES_IN_PROMPT]:
-        content = p['content'][:MAX_CHARS_PER_PAGE]
-        section = f"## [{p['title']}]({p['url']})\n\n{content}"
-        sections.append(section)
-    body = "\n\n---\n\n".join(sections)
-    return (
-        "あなたは boy.co.jp（横浜銀行）についての質問に答えるアシスタントです。"
-        "以下に示すサイトのコンテンツのみを根拠として回答してください。"
-        "答えがコンテンツ内に見つからない場合は、その旨を明確に伝えてください。"
-        "回答の際は、該当ページのタイトルと URL を引用してください。\n\n"
-        "# サイトコンテンツ\n\n" + body
-    )
-
+SYSTEM_INSTRUCTION = (
+    "あなたは boy.co.jp（横浜銀行）についての質問に答えるアシスタントです。"
+    "以下に示すサイトのコンテンツのみを根拠として回答してください。"
+    "答えがコンテンツ内に見つからない場合は、その旨を明確に伝えてください。"
+    "回答の際は、該当ページのタイトルと URL を引用してください。\n\n"
+)
 
 pages: list[dict] = []
-system_prompt: str = ""
 
 
 def load_content():
-    global pages, system_prompt
+    global pages
     if not DATA_FILE.exists():
         raise FileNotFoundError(
             f"Content file not found: {DATA_FILE}\n"
-            "Run:  python scraper.py  first."
+            "Run:  python3 scraper.py  first."
         )
     pages = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    system_prompt = build_system_prompt(pages)
-    print(f"Loaded {len(pages)} pages ({len(system_prompt):,} chars in system prompt)")
+    print(f"Loaded {len(pages)} pages")
 
 
 load_content()
 
 claude = anthropic.Anthropic()
+
+
+def find_relevant_pages(question: str, top_k: int = TOP_K_PAGES) -> list[dict]:
+    """質問のキーワードでページをスコアリングして上位を返す。"""
+    # 質問を単語に分割（スペース・句読点で区切る）
+    import re
+    words = set(re.split(r'[\s、。？?！!・]+', question.lower()))
+    words.discard('')
+
+    scored = []
+    for p in pages:
+        text = (p['title'] + ' ' + p['url'] + ' ' + p['content']).lower()
+        score = sum(1 for w in words if len(w) >= 2 and w in text)
+        scored.append((score, p))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    # スコアが0でも最低 top_k 件は返す（スコア上位から）
+    return [p for _, p in scored[:top_k]]
+
+
+def build_prompt_body(selected_pages: list[dict]) -> str:
+    sections = []
+    for p in selected_pages:
+        content = p['content'][:MAX_CHARS_PER_PAGE]
+        sections.append(f"## [{p['title']}]({p['url']})\n\n{content}")
+    return "# サイトコンテンツ\n\n" + "\n\n---\n\n".join(sections)
 
 
 @app.route("/")
@@ -65,20 +78,16 @@ def ask():
         return jsonify({"error": "question is required"}), 400
 
     try:
+        selected = find_relevant_pages(question)
+        prompt_body = build_prompt_body(selected)
+        system_text = SYSTEM_INSTRUCTION + prompt_body
+
+        print(f"Using {len(selected)} pages ({len(system_text):,} chars) for: {question[:40]}")
+
         response = claude.messages.create(
             model=MODEL,
             max_tokens=MAX_TOKENS,
-            # Prompt caching: the system block is byte-identical on every request
-            # (built once at startup). The cache_control marker covers the entire
-            # system + site content prefix. The user question arrives after the
-            # breakpoint in messages[0] and never invalidates the cache.
-            system=[
-                {
-                    "type": "text",
-                    "text": system_prompt,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
+            system=system_text,
             messages=[{"role": "user", "content": question}],
         )
 
@@ -88,11 +97,7 @@ def ask():
         answer = answer_block.text if answer_block else "(no answer)"
 
         u = response.usage
-        print(
-            f"[cache] creation={u.cache_creation_input_tokens} "
-            f"read={u.cache_read_input_tokens} "
-            f"uncached={u.input_tokens} out={u.output_tokens}"
-        )
+        print(f"[tokens] in={u.input_tokens} out={u.output_tokens}")
 
         return jsonify({"answer": answer})
 
