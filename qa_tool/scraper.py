@@ -57,16 +57,22 @@ def extract_text(html: str) -> tuple[str, str]:
 async def crawl() -> list[dict]:
     base_domain = urlparse(START_URL).netloc
     visited: set[str] = set()
-    # 重要なページを優先的にクロール
+    # 重要なページを優先的にクロール（金利・商品詳細ページを含む）
     priority_urls = [
         "https://www.boy.co.jp/kojin/card-loan/",
+        "https://www.boy.co.jp/kojin/card-loan/bankcardloan/",
+        "https://www.boy.co.jp/kojin/card-loan/outline/",
+        "https://www.boy.co.jp/kojin/card-loan/kinri/",
         "https://www.boy.co.jp/kojin/jutaku-loan/",
+        "https://www.boy.co.jp/kojin/jutaku-loan/kinri/",
         "https://www.boy.co.jp/kojin/mycar-loan/",
         "https://www.boy.co.jp/kojin/education-loan/",
         "https://www.boy.co.jp/kojin/free-loan/",
         "https://www.boy.co.jp/kojin/teiki/",
         "https://www.boy.co.jp/kojin/chochiku-yokin/",
         "https://www.boy.co.jp/tenpo/",
+        "https://www.boy.co.jp/kojin/kinri/",
+        "https://www.boy.co.jp/rate/",
     ]
     queue: list[str] = [START_URL] + priority_urls
     pages: list[dict] = []
@@ -103,14 +109,23 @@ async def crawl() -> list[dict]:
                 if not resp or resp.status >= 400:
                     print(f"  → HTTP {resp.status if resp else 'no response'}, skipped")
                     continue
+                # ページを一番下までスクロールして遅延読み込みコンテンツを表示
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                await page.wait_for_timeout(1000)
+
                 html = await page.content()
                 title, content = extract_text(html)
                 if content.strip():
                     pages.append({"url": url, "title": title, "content": content})
 
-                links = await page.eval_on_selector_all(
-                    "a[href]", "els => els.map(e => e.href)"
-                )
+                # <a href> だけでなく data-href / data-url 属性も収集
+                links = await page.evaluate("""() => {
+                    const hrefs = new Set();
+                    document.querySelectorAll('a[href]').forEach(e => hrefs.add(e.href));
+                    document.querySelectorAll('[data-href]').forEach(e => hrefs.add(e.dataset.href));
+                    document.querySelectorAll('[data-url]').forEach(e => hrefs.add(e.dataset.url));
+                    return [...hrefs];
+                }""")
                 for link in links:
                     abs_link = urljoin(url, link).split("#")[0]
                     if is_internal(abs_link, base_domain):
