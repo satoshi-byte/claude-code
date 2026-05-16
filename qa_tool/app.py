@@ -23,7 +23,7 @@ def build_system_prompt(pages: list[dict]) -> str:
         sections.append(section)
     body = "\n\n---\n\n".join(sections)
     return (
-        "あなたは boy.co.jp（日本のファッション・セレクトショップ）についての質問に答えるアシスタントです。"
+        "あなたは boy.co.jp（横浜銀行）についての質問に答えるアシスタントです。"
         "以下に示すサイトのコンテンツのみを根拠として回答してください。"
         "答えがコンテンツ内に見つからない場合は、その旨を明確に伝えてください。"
         "回答の際は、該当ページのタイトルと URL を引用してください。\n\n"
