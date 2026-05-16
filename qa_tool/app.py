@@ -39,21 +39,21 @@ claude = anthropic.Anthropic()
 
 
 def find_relevant_pages(question: str, top_k: int = TOP_K_PAGES) -> list[dict]:
-    """質問のキーワードでページをスコアリングして上位を返す。"""
-    # 質問を単語に分割（スペース・句読点で区切る）
-    import re
-    words = set(re.split(r'[\s、。？?！!・]+', question.lower()))
-    words.discard('')
+    """質問のn-gramでページをスコアリングして上位を返す（日本語対応）。"""
+    # 2〜4文字のn-gramを生成（日本語はスペースで分かれないため）
+    ngrams = set()
+    for n in (2, 3, 4):
+        for i in range(len(question) - n + 1):
+            gram = question[i:i+n]
+            ngrams.add(gram)
 
     scored = []
     for p in pages:
-        text = (p['title'] + ' ' + p['url'] + ' ' + p['content']).lower()
-        score = sum(1 for w in words if len(w) >= 2 and w in text)
+        text = p['title'] + p['url'] + p['content']
+        score = sum(1 for g in ngrams if g in text)
         scored.append((score, p))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-
-    # スコアが0でも最低 top_k 件は返す（スコア上位から）
     return [p for _, p in scored[:top_k]]
 
 
