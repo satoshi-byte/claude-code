@@ -60,13 +60,9 @@ async def crawl() -> list[dict]:
     queue: list[str] = [START_URL]
     pages: list[dict] = []
 
-    # Use the pre-installed Chromium binary directly to avoid version mismatch
-    chromium_path = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
-
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
-            executable_path=chromium_path,
         )
         context = await browser.new_context(
             ignore_https_errors=True,
