@@ -57,7 +57,18 @@ def extract_text(html: str) -> tuple[str, str]:
 async def crawl() -> list[dict]:
     base_domain = urlparse(START_URL).netloc
     visited: set[str] = set()
-    queue: list[str] = [START_URL]
+    # 重要なページを優先的にクロール
+    priority_urls = [
+        "https://www.boy.co.jp/kojin/card-loan/",
+        "https://www.boy.co.jp/kojin/jutaku-loan/",
+        "https://www.boy.co.jp/kojin/mycar-loan/",
+        "https://www.boy.co.jp/kojin/education-loan/",
+        "https://www.boy.co.jp/kojin/free-loan/",
+        "https://www.boy.co.jp/kojin/teiki/",
+        "https://www.boy.co.jp/kojin/chochiku-yokin/",
+        "https://www.boy.co.jp/tenpo/",
+    ]
+    queue: list[str] = [START_URL] + priority_urls
     pages: list[dict] = []
 
     async with async_playwright() as p:
@@ -88,7 +99,7 @@ async def crawl() -> list[dict]:
 
             try:
                 print(f"[{len(pages)+1}/{MAX_PAGES}] {url}")
-                resp = await page.goto(url, timeout=20000, wait_until="domcontentloaded")
+                resp = await page.goto(url, timeout=30000, wait_until="networkidle")
                 if not resp or resp.status >= 400:
                     print(f"  → HTTP {resp.status if resp else 'no response'}, skipped")
                     continue
