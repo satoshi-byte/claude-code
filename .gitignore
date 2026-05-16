@@ -1,0 +1,3 @@
+qa_tool/data/
+__pycache__/
+*.pyc
