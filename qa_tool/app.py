@@ -11,10 +11,15 @@ MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 1024
 
 
+MAX_PAGES_IN_PROMPT = 10
+MAX_CHARS_PER_PAGE = 2000
+
+
 def build_system_prompt(pages: list[dict]) -> str:
     sections = []
-    for p in pages:
-        section = f"## [{p['title']}]({p['url']})\n\n{p['content']}"
+    for p in pages[:MAX_PAGES_IN_PROMPT]:
+        content = p['content'][:MAX_CHARS_PER_PAGE]
+        section = f"## [{p['title']}]({p['url']})\n\n{content}"
         sections.append(section)
     body = "\n\n---\n\n".join(sections)
     return (
