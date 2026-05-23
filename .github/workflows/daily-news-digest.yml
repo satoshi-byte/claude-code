@@ -1,0 +1,36 @@
+name: Daily Gov News Digest
+
+on:
+  # 毎朝 6:00 JST (= 21:00 UTC 前日) に実行
+  schedule:
+    - cron: '0 21 * * *'
+  # 手動トリガー（テスト用）
+  workflow_dispatch:
+
+jobs:
+  digest:
+    name: Fetch & Summarize News
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run news digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: python scripts/news_digest.py
